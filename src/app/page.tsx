@@ -25,17 +25,19 @@ import {
   getPublicEventStats,
   listFeaturedEvents,
   listUpcomingEvents,
+  listWeekendEvents,
 } from "@/lib/events";
-import { CATEGORIES, formatDate, formatMoney, formatTime } from "@/lib/format";
+import {
+  CATEGORIES,
+  formatDate,
+  formatDayParts,
+  formatMoney,
+  formatTime,
+} from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const HERO_IMAGE =
-  "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=" +
-  encodeURIComponent(
-    "premium concert crowd silhouette with purple and cyan stage lights, dramatic haze, wide cinematic hero image",
-  ) +
-  "&image_size=landscape_16_9";
+const HERO_IMAGE = "/images/hero-crowd.png";
 
 const categoryIcons: Record<string, typeof Music2> = {
   Concerts: Music2,
@@ -50,6 +52,31 @@ const categoryIcons: Record<string, typeof Music2> = {
   Other: CalendarDays,
 };
 
+const VIBE_CATEGORIES = [
+  {
+    category: "Concerts",
+    image: "/images/vibe-concerts.png",
+    blurb: "Live shows & big stages",
+  },
+  {
+    category: "Nightlife",
+    image: "/images/vibe-nightlife.png",
+    blurb: "Club nights & late sessions",
+  },
+  {
+    category: "Church",
+    image: "/images/vibe-gospel.png",
+    blurb: "Gospel, worship & choirs",
+  },
+  {
+    category: "Weddings & Roora",
+    image: "/images/vibe-roora.png",
+    blurb: "Celebrate the big day",
+  },
+];
+
+const VIBE_SET = new Set(VIBE_CATEGORIES.map((vibe) => vibe.category));
+
 export default function HomePage() {
   const featured = listFeaturedEvents(3);
   const featuredIds = new Set(featured.map((e) => e.id));
@@ -58,8 +85,12 @@ export default function HomePage() {
     .slice(0, 6);
   const categories = getCategoryCounts();
   const stats = getPublicEventStats();
+  const weekend = listWeekendEvents(5);
   const heroEvent = featured[0];
   const categoryCount = new Map(categories.map((c) => [c.category, c.count]));
+  const moreCategories = CATEGORIES.filter(
+    (category) => !VIBE_SET.has(category) && (categoryCount.get(category) || 0) > 0,
+  );
 
   return (
     <div>
@@ -229,6 +260,64 @@ export default function HomePage() {
         </div>
       </section>
 
+      {weekend.length > 0 ? (
+        <section className="container-page mt-14">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="eyebrow">This weekend</p>
+              <h2 className="mt-2 font-display text-[26px] font-semibold tracking-[-0.035em] text-ink-950 md:text-[32px]">
+                Don&apos;t let the weekend sneak up on you
+              </h2>
+            </div>
+            <Link
+              href="/events?date=week"
+              className="hidden items-center gap-1.5 text-[13px] font-semibold text-brand-700 hover:text-brand-800 sm:flex"
+            >
+              Full weekend lineup <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="mt-6 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
+            {weekend.map((event) => {
+              const parts = formatDayParts(event.starts_at);
+              return (
+                <Link
+                  key={event.id}
+                  href={`/events/${event.slug}`}
+                  className="group flex items-center gap-3.5 px-4 py-3 transition hover:bg-brand-50/50 sm:gap-4 sm:px-5"
+                >
+                  <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100">
+                    <span className="text-[9px] font-bold uppercase tracking-wider">
+                      {parts.weekday}
+                    </span>
+                    <span className="font-display text-[17px] font-semibold leading-none">
+                      {parts.day}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-brand-600">
+                      {event.category} · {parts.month}
+                    </p>
+                    <p className="mt-0.5 truncate font-display text-[14.5px] font-semibold text-ink-950">
+                      {event.title}
+                    </p>
+                    <p className="mt-0.5 flex items-center gap-1 truncate text-[11.5px] text-ink-400">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      {event.venue}, {event.city} · {formatTime(event.starts_at)}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-[12.5px] font-semibold text-ink-900">
+                    {event.min_price_cents === 0
+                      ? "Free"
+                      : `From ${formatMoney(event.min_price_cents || 0)}`}
+                  </p>
+                  <ArrowUpRight className="h-4 w-4 shrink-0 text-ink-300 transition group-hover:-translate-y-0.5 group-hover:text-brand-600" />
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
       <section className="container-page mt-14">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -254,37 +343,68 @@ export default function HomePage() {
       <section className="container-page mt-16">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="eyebrow">Browse by category</p>
+            <p className="eyebrow">Pick a vibe</p>
             <h2 className="mt-2 font-display text-[26px] font-semibold tracking-[-0.035em] text-ink-950 md:text-[32px]">
-              Find your kind of night out
+              What are you in the mood for?
             </h2>
           </div>
         </div>
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {CATEGORIES.slice(0, 9).map((category) => {
-            const Icon = categoryIcons[category] || CalendarDays;
-            const count = categoryCount.get(category) || 0;
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {VIBE_CATEGORIES.map((vibe) => {
+            const count = categoryCount.get(vibe.category) || 0;
             return (
               <Link
-                key={category}
-                href={`/events?category=${encodeURIComponent(category)}`}
-                className="group flex items-center gap-3 rounded-xl border border-line bg-white px-3.5 py-3.5 transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-[0_8px_24px_rgba(109,40,217,0.08)]"
+                key={vibe.category}
+                href={`/events?category=${encodeURIComponent(vibe.category)}`}
+                className="group relative aspect-[3/2] overflow-hidden rounded-2xl"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white">
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-[12.5px] font-semibold text-ink-900">
-                    {category}
-                  </span>
-                  <span className="block text-[10.5px] text-ink-400">
+                <Image
+                  src={vibe.image}
+                  alt={vibe.category}
+                  fill
+                  unoptimized
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/25 to-transparent" />
+                <div className="absolute inset-x-4 bottom-4 text-white">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/70">
                     {count > 0 ? `${count} event${count === 1 ? "" : "s"}` : "Coming soon"}
-                  </span>
-                </span>
+                  </p>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <p className="font-display text-[17px] font-semibold leading-tight">
+                      {vibe.category}
+                    </p>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 backdrop-blur transition group-hover:bg-white group-hover:text-ink-950">
+                      <ArrowUpRight className="h-4 w-4" />
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-[11.5px] text-white/60">{vibe.blurb}</p>
+                </div>
               </Link>
             );
           })}
         </div>
+        {moreCategories.length > 0 ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {moreCategories.map((category) => {
+              const Icon = categoryIcons[category] || CalendarDays;
+              return (
+                <Link
+                  key={category}
+                  href={`/events?category=${encodeURIComponent(category)}`}
+                  className="flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 transition hover:border-brand-200 hover:text-brand-700"
+                >
+                  <Icon className="h-3.5 w-3.5 text-brand-600" />
+                  {category}
+                  <span className="text-[10.5px] text-ink-400">
+                    {categoryCount.get(category)}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        ) : null}
       </section>
 
       <section className="container-page mt-16">

@@ -24,6 +24,13 @@ function addDays(base: Date, days: number, hour = 18, minute = 0) {
   return d.toISOString();
 }
 
+function addNextFriday(base: Date, hour = 19, minute = 0) {
+  const d = new Date(base);
+  d.setDate(d.getDate() + ((5 - d.getDay()) % 7 + 7) % 7);
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+}
+
 function addMinutes(iso: string, minutes: number) {
   return new Date(new Date(iso).getTime() + minutes * 60_000).toISOString();
 }
@@ -268,6 +275,43 @@ export function seedDatabase(db: DatabaseSync) {
     }
 
     const events: EventSeed[] = [
+      {
+        id: "evt_fridaylive",
+        slug: "friday-night-live-acoustic-sessions",
+        title: "Friday Night Live: Acoustic Sessions",
+        tagline: "Unplugged Zimbabwean favourites with a full band under the stars.",
+        description:
+          "Friday Night Live is an intimate open-air concert in the Zimbabwe German Society Gardens. A house band reworks Zimbabwean classics and current hits acoustically, with guest vocalists between sets.\n\nGates open at 18:00 and the music starts at 19:00. Food trucks and a full bar are on site. Low chairs and picnic blankets welcome in the lawn area.\n\nEarly Bird tickets are strictly limited.",
+        category: "Concerts",
+        city: "Harare",
+        venue: "Zimbabwe German Society Gardens",
+        address: "Adylinn Road, Eastlea, Harare",
+        organizer: "usr_org1",
+        status: "approved",
+        featured: 0,
+        start: addNextFriday(now, 19),
+        end: addNextFriday(now, 23),
+        image: "/images/vibe-concerts.png",
+        ageLimit: "All ages",
+        tiers: [
+          {
+            id: "tt_friday_early",
+            name: "Early Bird",
+            description: "Limited release lawn access.",
+            price: 1000,
+            capacity: 80,
+            perks: "Lawn access",
+          },
+          {
+            id: "tt_friday_ga",
+            name: "General Admission",
+            description: "Full evening of acoustic sessions.",
+            price: 1500,
+            capacity: 220,
+            perks: "Garden access · All sets",
+          },
+        ],
+      },
       {
         id: "evt_neon",
         slug: "neon-nights-harare",

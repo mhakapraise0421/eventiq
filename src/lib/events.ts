@@ -111,6 +111,21 @@ export function listUpcomingEvents(limit = 6): EventRecord[] {
   );
 }
 
+export function listWeekendEvents(limit = 4): EventRecord[] {
+  const now = new Date();
+  const harareToday = new Date(now.getTime() + 2 * 3600_000);
+  const daysToSunday = (7 - harareToday.getUTCDay()) % 7;
+  const sunday = new Date(harareToday);
+  sunday.setUTCDate(sunday.getUTCDate() + daysToSunday);
+  const end = new Date(`${sunday.toISOString().slice(0, 10)}T23:59:59+02:00`).toISOString();
+  return all<EventRecord>(
+    `${EVENT_SELECT} WHERE e.status = 'approved' AND e.starts_at >= ? AND e.starts_at <= ? ORDER BY e.starts_at ASC LIMIT ?`,
+    now.toISOString(),
+    end,
+    limit,
+  );
+}
+
 export function getEventBySlug(slug: string): EventRecord | undefined {
   return get<EventRecord>(`${EVENT_SELECT} WHERE e.slug = ?`, slug);
 }
