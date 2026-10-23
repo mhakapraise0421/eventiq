@@ -3,8 +3,17 @@ import Link from "next/link";
 import { ArrowUpRight, CalendarDays, MapPin } from "lucide-react";
 import type { EventRecord } from "@/lib/types";
 import { formatDayParts, formatMoney, formatTime } from "@/lib/format";
+import { FavoriteButton } from "@/components/favorite-button";
 
-export function EventCard({ event, priority = false }: { event: EventRecord; priority?: boolean }) {
+export function EventCard({
+  event,
+  priority = false,
+  favorite,
+}: {
+  event: EventRecord;
+  priority?: boolean;
+  favorite?: { favorited: boolean; authenticated: boolean };
+}) {
   const date = formatDayParts(event.starts_at);
   const remaining = Math.max(0, (event.total_capacity || 0) - (event.tickets_sold || 0));
   const soldOut = remaining === 0;
@@ -13,8 +22,9 @@ export function EventCard({ event, priority = false }: { event: EventRecord; pri
   const minPrice = event.min_price_cents ?? 0;
 
   return (
-    <Link href={`/events/${event.slug}`} className="group block">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gradient-to-br from-brand-100 via-surface to-aqua-300/30">
+    <div className="group relative">
+      <Link href={`/events/${event.slug}`} className="block">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gradient-to-br from-brand-100 via-surface to-aqua-300/30">
         {event.cover_image ? (
           <Image
             src={event.cover_image}
@@ -35,7 +45,7 @@ export function EventCard({ event, priority = false }: { event: EventRecord; pri
             {date.day}
           </span>
         </div>
-        <div className="absolute right-3 top-3 rounded-full bg-ink-950/75 px-2.5 py-1 text-[10.5px] font-semibold text-white backdrop-blur">
+        <div className={`absolute top-3 rounded-full bg-ink-950/75 px-2.5 py-1 text-[10.5px] font-semibold text-white backdrop-blur ${favorite ? "right-12" : "right-3"}`}>
           {event.category}
         </div>
         {soldOut ? (
@@ -72,6 +82,16 @@ export function EventCard({ event, priority = false }: { event: EventRecord; pri
           </span>
         </div>
       </div>
-    </Link>
+      </Link>
+      {favorite ? (
+        <div className="absolute right-3 top-3 z-10">
+          <FavoriteButton
+            eventId={event.id}
+            initialFavorited={favorite.favorited}
+            isAuthenticated={favorite.authenticated}
+          />
+        </div>
+      ) : null}
+    </div>
   );
 }

@@ -182,6 +182,27 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS favorite_events (
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, event_id)
+);
+
+CREATE TABLE IF NOT EXISTS recently_viewed_events (
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  viewed_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, event_id)
+);
+
+CREATE TABLE IF NOT EXISTS user_interests (
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  category TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, category)
+);
+
 CREATE INDEX IF NOT EXISTS idx_events_status_date ON events(status, starts_at);
 CREATE INDEX IF NOT EXISTS idx_events_organizer ON events(organizer_id);
 CREATE INDEX IF NOT EXISTS idx_ticket_types_event ON ticket_types(event_id);
@@ -191,4 +212,7 @@ CREATE INDEX IF NOT EXISTS idx_tickets_order ON tickets(order_id);
 CREATE INDEX IF NOT EXISTS idx_tickets_event ON tickets(event_id);
 CREATE INDEX IF NOT EXISTS idx_scan_events_event ON scan_events(event_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorite_events(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_recent_user ON recently_viewed_events(user_id, viewed_at);
+CREATE INDEX IF NOT EXISTS idx_interests_user ON user_interests(user_id);
 `;

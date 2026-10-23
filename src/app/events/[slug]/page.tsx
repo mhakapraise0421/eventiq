@@ -15,6 +15,10 @@ import {
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import {
+  listFavoriteEventIds,
+  recordEventView,
+} from "@/lib/attendee";
+import {
   getEventBySlug,
   getTicketTypes,
   listPublicEvents,
@@ -28,6 +32,8 @@ import {
 } from "@/lib/format";
 import { TicketSelector } from "@/components/ticket-selector";
 import { EventCard } from "@/components/event-card";
+import { FavoriteButton } from "@/components/favorite-button";
+import { ShareButton } from "@/components/share-button";
 import { StatusBadge } from "@/components/status-badge";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +67,11 @@ export default async function EventDetailPage({
   if (!event) notFound();
 
   const user = await getCurrentUser();
+  if (user && event.status === "approved") {
+    recordEventView(user.id, event.id);
+  }
+  const favoriteSet = new Set(user ? listFavoriteEventIds(user.id) : []);
+  const favorited = favoriteSet.has(event.id);
   const canPreview =
     !!user &&
     (user.id === event.organizer_id ||
@@ -123,6 +134,15 @@ export default async function EventDetailPage({
               {event.tagline}
             </p>
           ) : null}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <FavoriteButton
+              eventId={event.id}
+              initialFavorited={favorited}
+              isAuthenticated={!!user}
+              variant="pill"
+            />
+            <ShareButton title={event.title} url={`/events/${event.slug}`} />
+          </div>
         </div>
 
         <div className="relative mt-6 aspect-[16/9] overflow-hidden rounded-2xl bg-gradient-to-br from-brand-100 via-surface to-aqua-300/30 md:aspect-[21/9]">
@@ -337,7 +357,11 @@ export default async function EventDetailPage({
             </div>
             <div className="mt-5 grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((item) => (
-                <EventCard key={item.id} event={item} />
+                <EventCard
+                  key={item.id}
+                  event={item}
+                  favorite={{ favorited: favoriteSet.has(item.id), authenticated: !!user }}
+                />
               ))}
             </div>
           </section>

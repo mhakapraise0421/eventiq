@@ -2,7 +2,7 @@ import "server-only";
 import { all, get } from "./db";
 import type { EventRecord, TicketType } from "./types";
 
-const EVENT_SELECT = `
+export const EVENT_SELECT = `
   SELECT
     e.*,
     u.name AS organizer_name,

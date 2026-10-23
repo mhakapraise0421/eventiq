@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { BadgeCheck, CalendarDays, Mail, ShieldCheck } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { listUserInterests } from "@/lib/attendee";
 import { formatDate, ROLE_LABEL } from "@/lib/format";
 import { ConsoleHeader } from "@/components/console-header";
 import { ProfileForm } from "@/components/profile-form";
+import { InterestsPicker } from "@/components/interests-picker";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Profile settings" };
@@ -12,11 +14,14 @@ const tabs = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/tickets", label: "My tickets" },
   { href: "/dashboard/orders", label: "Orders" },
+  { href: "/dashboard/saved", label: "Saved" },
+  { href: "/dashboard/parking", label: "Parking" },
   { href: "/dashboard/profile", label: "Profile" },
 ];
 
 export default async function ProfilePage() {
   const user = await requireUser();
+  const interests = listUserInterests(user.id);
 
   return (
     <div className="min-h-[70vh] bg-surface/40 pb-16">
@@ -66,6 +71,10 @@ export default async function ProfilePage() {
             notify_whatsapp: user.notify_whatsapp,
           }}
         />
+
+        <div className="mt-5">
+          <InterestsPicker initial={interests} />
+        </div>
 
         <p className="mt-4 flex items-center gap-1.5 text-[10.5px] text-ink-400">
           <ShieldCheck className="h-3 w-3" /> Need your data removed? Contact support and we

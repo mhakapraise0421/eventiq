@@ -1,6 +1,6 @@
 import "server-only";
 import { all, get, transaction } from "./db";
-import type { Order, OrderItem, Ticket, TicketType } from "./types";
+import type { Order, OrderItem, OrderStatus, Ticket, TicketType } from "./types";
 import {
   COMMISSION_RATE,
   RESERVATION_MINUTES,
@@ -350,6 +350,26 @@ export function getUserTickets(userId: string): Ticket[] {
      JOIN ticket_types tt ON tt.id = t.ticket_type_id
      JOIN orders o ON o.id = t.order_id
      WHERE o.user_id = ? AND o.status IN ('paid', 'partially_refunded')
+     ORDER BY e.starts_at ASC, t.issued_at ASC`,
+    userId,
+  );
+}
+
+export interface TicketWithOrderState extends Ticket {
+  order_status: OrderStatus;
+}
+
+export function listAllUserTickets(userId: string): TicketWithOrderState[] {
+  return all<TicketWithOrderState>(
+    `SELECT t.*, e.title AS event_title, e.slug AS event_slug, e.starts_at AS event_starts_at,
+            e.ends_at AS event_ends_at, e.venue, e.city, e.cover_image,
+            tt.name AS ticket_type_name, o.reference AS order_reference,
+            o.status AS order_status
+     FROM tickets t
+     JOIN events e ON e.id = t.event_id
+     JOIN ticket_types tt ON tt.id = t.ticket_type_id
+     JOIN orders o ON o.id = t.order_id
+     WHERE o.user_id = ? AND o.status IN ('paid', 'partially_refunded', 'refunded')
      ORDER BY e.starts_at ASC, t.issued_at ASC`,
     userId,
   );

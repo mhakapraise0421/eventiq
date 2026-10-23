@@ -50,12 +50,16 @@ export function getDb(): DatabaseSync {
   return globalDb.__eventiqDb;
 }
 
+// node:sqlite returns rows with a null prototype, which React cannot
+// serialize when passed from Server Components to Client Components.
+// Spreading each row produces normal plain objects.
 export function all<T>(sql: string, ...params: SQLValue[]): T[] {
-  return getDb().prepare(sql).all(...params) as T[];
+  return (getDb().prepare(sql).all(...params) as T[]).map((row) => ({ ...row }));
 }
 
 export function get<T>(sql: string, ...params: SQLValue[]): T | undefined {
-  return getDb().prepare(sql).get(...params) as T | undefined;
+  const row = getDb().prepare(sql).get(...params) as T | undefined;
+  return row ? { ...row } : row;
 }
 
 export function run(sql: string, ...params: SQLValue[]) {

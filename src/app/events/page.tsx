@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Filter, Search, SlidersHorizontal, X } from "lucide-react";
 import { EventCard } from "@/components/event-card";
 import { EmptyState } from "@/components/empty-state";
+import { getCurrentUser } from "@/lib/auth";
+import { listFavoriteEventIds } from "@/lib/attendee";
 import { listPublicEvents, type EventFilters } from "@/lib/events";
 import { CATEGORIES, CITIES } from "@/lib/format";
 
@@ -34,6 +36,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
   };
   const events = listPublicEvents(filters);
   const hasFilters = Object.values(filters).some(Boolean);
+  const user = await getCurrentUser();
+  const favoriteSet = new Set(user ? listFavoriteEventIds(user.id) : []);
 
   return (
     <div>
@@ -188,7 +192,12 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
         {events.length ? (
           <div className="mt-6 grid gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
             {events.map((event, index) => (
-              <EventCard key={event.id} event={event} priority={index < 3} />
+              <EventCard
+                key={event.id}
+                event={event}
+                priority={index < 3}
+                favorite={{ favorited: favoriteSet.has(event.id), authenticated: !!user }}
+              />
             ))}
           </div>
         ) : (

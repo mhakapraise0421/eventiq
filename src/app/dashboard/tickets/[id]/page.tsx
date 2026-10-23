@@ -3,12 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
+  ArrowUpRight,
   CalendarDays,
   Clock,
   ExternalLink,
   MapPin,
   Receipt,
   ShieldCheck,
+  UserRoundPlus,
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { getTicketForUser } from "@/lib/orders";
@@ -37,6 +39,8 @@ export default async function TicketDetailPage({
 
   const startsAt = ticket.event_starts_at || new Date().toISOString();
   const endsAt = ticket.event_ends_at || startsAt;
+  const eventUpcoming = new Date(startsAt).getTime() > Date.now();
+  const canReassign = ticket.status === "valid" && eventUpcoming;
   const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
     ticket.event_title || "EventIQ event",
   )}&dates=${calendarStamp(startsAt)}/${calendarStamp(
@@ -94,6 +98,22 @@ export default async function TicketDetailPage({
               <Link href={`/events/${ticket.event_slug}`} className="btn btn-outline btn-sm">
                 Event page <ExternalLink className="h-3.5 w-3.5" />
               </Link>
+              {canReassign ? (
+                <>
+                  <Link
+                    href={`/dashboard/tickets/${ticket.id}/transfer`}
+                    className="btn btn-outline btn-sm"
+                  >
+                    <UserRoundPlus className="h-3.5 w-3.5" /> Transfer
+                  </Link>
+                  <Link
+                    href={`/dashboard/tickets/${ticket.id}/resell`}
+                    className="btn btn-outline btn-sm"
+                  >
+                    <ArrowUpRight className="h-3.5 w-3.5" /> Resell
+                  </Link>
+                </>
+              ) : null}
             </div>
             <p className="mt-3 flex items-start gap-1.5 text-[10.5px] leading-relaxed text-ink-400">
               <ShieldCheck className="mt-0.5 h-3 w-3 shrink-0" />

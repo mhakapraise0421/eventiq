@@ -15,6 +15,8 @@ const tabs = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/tickets", label: "My tickets" },
   { href: "/dashboard/orders", label: "Orders" },
+  { href: "/dashboard/saved", label: "Saved" },
+  { href: "/dashboard/parking", label: "Parking" },
   { href: "/dashboard/profile", label: "Profile" },
 ];
 

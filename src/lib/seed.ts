@@ -1011,6 +1011,37 @@ export function seedDatabase(db: DatabaseSync) {
       createdAt: addDays(now, -34, 12, 0),
     });
 
+    // Demo attendee personalization — favorites, interests and recently viewed.
+    const favoriteSeed = [
+      { eventId: "evt_fridaylive", daysAgo: 2 },
+      { eventId: "evt_amapiano", daysAgo: 5 },
+      { eventId: "evt_vicfalls", daysAgo: 9 },
+    ];
+    for (const item of favoriteSeed) {
+      db.prepare(
+        "INSERT OR IGNORE INTO favorite_events (user_id, event_id, created_at) VALUES (?, ?, ?)",
+      ).run(demoUser.id, item.eventId, addDays(now, -item.daysAgo, 9, 30));
+    }
+    const interestSeed = ["Concerts", "Nightlife", "Comedy"];
+    interestSeed.forEach((category, index) => {
+      db.prepare(
+        "INSERT OR IGNORE INTO user_interests (user_id, category, created_at) VALUES (?, ?, ?)",
+      ).run(demoUser.id, category, addDays(now, -12, 10, 5 + index));
+    });
+    const viewedSeed = [
+      { eventId: "evt_fridaylive", daysAgo: 1 },
+      { eventId: "evt_zimfest", daysAgo: 2 },
+      { eventId: "evt_amapiano", daysAgo: 3 },
+      { eventId: "evt_nye", daysAgo: 6 },
+    ];
+    for (const item of viewedSeed) {
+      db.prepare(
+        `INSERT OR IGNORE INTO recently_viewed_events (user_id, event_id, viewed_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(user_id, event_id) DO UPDATE SET viewed_at = excluded.viewed_at`,
+      ).run(demoUser.id, item.eventId, addDays(now, -item.daysAgo, 20, 45));
+    }
+
     // Sync sold counters with the orders actually created.
     for (const [tierId, sold] of soldByTier) {
       db.prepare("UPDATE ticket_types SET sold = ? WHERE id = ?").run(sold, tierId);
