@@ -1,0 +1,29 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# runtime data (auto-created and seeded on first run)
+/.data
+
+# misc
+.DS_Store
+Thumbs.db
+*.pem
+
+# debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env files
+.env*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
