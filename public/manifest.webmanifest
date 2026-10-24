@@ -7,7 +7,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#000000",
-  "theme_color": "#020E99",
+  "theme_color": "#6026D9",
   "categories": ["entertainment", "tickets", "events", "music"],
   "lang": "en-ZW",
   "icons": [

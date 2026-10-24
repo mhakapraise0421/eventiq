@@ -125,11 +125,14 @@ export default function HomePage() {
               </div>
 
               <h1 className="mt-5 max-w-[15ch] font-display text-[38px] font-semibold leading-[1.02] tracking-[-0.045em] text-white sm:text-[50px] md:text-[54px]">
-                Your next great night starts here.
+                Discover. Book.{" "}
+                <span className="bg-gradient-to-r from-aqua-300 via-aqua-400 to-brand-400 bg-clip-text text-transparent">
+                  Experience.
+                </span>
               </h1>
               <p className="mt-4 max-w-md text-[14px] leading-relaxed text-white/60">
-                Discover concerts, festivals, nightlife and conferences. Secure your
-                ticket in minutes and get in with a single scan.
+                Zimbabwe&apos;s home for concerts, festivals, nightlife and conferences.
+                Secure your ticket in minutes and walk in with a single scan.
               </p>
 
               <form

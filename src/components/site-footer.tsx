@@ -17,8 +17,11 @@ export function SiteFooter() {
       <div className="container-page py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
-            <Logo variant="light" />
-            <p className="mt-4 max-w-sm text-[13.5px] leading-relaxed text-white/55">
+            <Logo variant="light" tagline />
+            <p className="mt-5 font-display text-[15px] font-semibold tracking-[-0.02em] text-white">
+              More Than Just <span className="text-aqua-400">Tickets.</span>
+            </p>
+            <p className="mt-2 max-w-sm text-[13.5px] leading-relaxed text-white/55">
               Zimbabwe-first event discovery, ticketing and gate operations. Built for
               organizers who care about every ticket and every guest.
             </p>

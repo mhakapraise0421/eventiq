@@ -23,16 +23,17 @@ export function TicketCard({
         isVoid ? "opacity-70" : ""
       }`}
     >
-      <div className="flex items-center justify-between gap-3 bg-ink-950 px-5 py-3.5 text-white">
-        <div className="min-w-0">
-          <p className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-white/40">
+      <div className="relative flex items-center justify-between gap-3 overflow-hidden bg-gradient-to-r from-brand-900 via-brand-700 to-brand-500 px-5 py-3.5 text-white">
+        <div className="pointer-events-none absolute -right-6 -top-10 h-24 w-24 rounded-full bg-aqua-400/25 blur-2xl" />
+        <div className="relative min-w-0">
+          <p className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-white/50">
             EventIQ ticket
           </p>
           <p className="mt-0.5 truncate font-display text-[14.5px] font-semibold">
             {ticket.event_title}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[9.5px] font-semibold">
+        <span className="relative shrink-0 rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[9.5px] font-semibold">
           {ticket.ticket_type_name}
         </span>
       </div>

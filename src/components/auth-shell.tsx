@@ -23,7 +23,7 @@ export function AuthShell({
           <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand-600/40 blur-3xl" />
           <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-aqua-500/20 blur-3xl" />
           <div className="relative">
-            <Logo variant="light" />
+            <Logo variant="light" tagline />
             <p className="mt-10 text-[11px] font-bold uppercase tracking-[0.16em] text-aqua-300">
               {eyebrow}
             </p>
@@ -74,7 +74,7 @@ export function AuthShell({
 
         <div className="p-6 sm:p-10">
           <div className="lg:hidden">
-            <Logo />
+            <Logo tagline />
           </div>
           <div className="mt-6 lg:mt-0">{children}</div>
           {footer ? <div className="mt-6">{footer}</div> : null}

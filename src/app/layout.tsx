@@ -7,13 +7,13 @@ import { ServiceWorkerRegistration } from "@/components/service-worker-registrat
 
 const montserrat = Montserrat({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-montserrat",
   display: "swap",
 });
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: light)", color: "#6026D9" },
     { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
   width: "device-width",
@@ -68,10 +68,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${montserrat.variable} min-h-screen bg-white font-sans text-ink-900 antialiased`}
-      >
+    <html lang="en" className={montserrat.variable}>
+      <body className="min-h-screen bg-white font-sans text-ink-900 antialiased">
         <ServiceWorkerRegistration />
         <SiteHeader />
         <main className="min-h-[60vh]">{children}</main>

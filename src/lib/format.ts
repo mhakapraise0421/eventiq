@@ -1,6 +1,6 @@
 export const BRAND = {
   name: "EventIQ",
-  accent: "#020E99",
+  accent: "#6026D9",
   secondary: "#22D3EE",
   supportEmail: "support@eventiq.co.zw",
   city: "Harare, Zimbabwe",
