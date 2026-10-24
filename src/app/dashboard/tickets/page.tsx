@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarDays, QrCode, Ticket as TicketIcon } from "lucide-react";
+import { CalendarDays, Download, QrCode, Ticket as TicketIcon } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { listAllUserTickets } from "@/lib/orders";
 import { signTicketCode } from "@/lib/ticket-code";
@@ -143,12 +143,23 @@ export default async function MyTicketsPage({
                         <CalendarDays className="h-3 w-3" />
                         {ticket.city} · {ticket.venue}
                       </span>
-                      <Link
-                        href={`/dashboard/tickets/${ticket.id}`}
-                        className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-brand-700"
-                      >
-                        Open ticket <QrCode className="h-3.5 w-3.5" />
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        {ticket.status !== "void" ? (
+                          <a
+                            href={`/api/tickets/${ticket.id}/pdf`}
+                            download
+                            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-ink-500 hover:text-ink-900"
+                          >
+                            PDF <Download className="h-3.5 w-3.5" />
+                          </a>
+                        ) : null}
+                        <Link
+                          href={`/dashboard/tickets/${ticket.id}`}
+                          className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-brand-700"
+                        >
+                          Open ticket <QrCode className="h-3.5 w-3.5" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 ))}

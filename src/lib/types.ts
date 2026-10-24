@@ -171,6 +171,7 @@ export interface Ticket {
   event_slug?: string;
   event_starts_at?: string;
   event_ends_at?: string | null;
+  event_category?: string;
   venue?: string;
   city?: string;
   cover_image?: string | null;

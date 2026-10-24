@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   CalendarDays,
   Clock,
+  Download,
   ExternalLink,
   MapPin,
   Receipt,
@@ -94,6 +95,15 @@ export default async function TicketDetailPage({
           <div>
             <TicketCard ticket={ticket} qrValue={signTicketCode(ticket.code)} />
             <div className="no-print mt-3 flex flex-wrap items-center gap-2">
+              {ticket.status !== "void" ? (
+                <a
+                  href={`/api/tickets/${ticket.id}/pdf`}
+                  className="btn btn-primary btn-sm"
+                  download
+                >
+                  <Download className="h-3.5 w-3.5" /> Download PDF
+                </a>
+              ) : null}
               <PrintButton label="Print ticket" />
               <Link href={`/events/${ticket.event_slug}`} className="btn btn-outline btn-sm">
                 Event page <ExternalLink className="h-3.5 w-3.5" />

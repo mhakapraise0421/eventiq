@@ -392,7 +392,7 @@ export function getTicketById(ticketId: string): Ticket | undefined {
 export function getTicketForUser(ticketId: string, userId: string): Ticket | undefined {
   return get<Ticket>(
     `SELECT t.*, e.title AS event_title, e.slug AS event_slug, e.starts_at AS event_starts_at,
-            e.ends_at AS event_ends_at, e.venue, e.city, e.cover_image,
+            e.ends_at AS event_ends_at, e.category AS event_category, e.venue, e.city, e.cover_image,
             tt.name AS ticket_type_name, o.reference AS order_reference
      FROM tickets t
      JOIN events e ON e.id = t.event_id
