@@ -22,9 +22,15 @@ export function clientIp(request: Request) {
   return request.headers.get("x-real-ip") || "127.0.0.1";
 }
 
+const MAX_JSON_BYTES = 1024 * 1024;
+
 export async function readJson<T = Record<string, unknown>>(request: Request) {
+  const declared = Number(request.headers.get("content-length") || 0);
+  if (declared > MAX_JSON_BYTES) return null;
   try {
-    return (await request.json()) as T;
+    const text = await request.text();
+    if (text.length > MAX_JSON_BYTES) return null;
+    return JSON.parse(text) as T;
   } catch {
     return null;
   }

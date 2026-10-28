@@ -24,8 +24,14 @@ interface SalesRow {
 
 function cell(value: string | number | null | undefined) {
   if (value === null || value === undefined) return "";
-  const text = String(value);
-  if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+  let text = String(value);
+  // Spreadsheet apps run cells that start with =, @, tab or a signed expression.
+  // A leading apostrophe keeps user-supplied text inert.
+  const numeric = /^[+-]?\d+(\.\d+)?$/.test(text);
+  if (/^[=@\t\r]/.test(text) || (!numeric && /^[+-]/.test(text))) {
+    text = `'${text}`;
+  }
+  if (/[",\n\r]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
   return text;
 }
 
@@ -133,6 +139,7 @@ export async function GET(request: Request) {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="eventiq-sales-${stamp}.csv"`,
       "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

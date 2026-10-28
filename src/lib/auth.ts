@@ -6,6 +6,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypt
 import { all, get, run } from "./db";
 import { randomId } from "./format";
 import { mfaSatisfied } from "./mfa";
+import { resolveSecret } from "./secrets";
 import type { Role, User } from "./types";
 
 const SESSION_COOKIE = "eventiq_session";
@@ -15,7 +16,7 @@ const MFA_TTL_SECONDS = 60 * 10;
 const LAST_SEEN_INTERVAL_MS = 5 * 60_000;
 
 function sessionSecret() {
-  return process.env.SESSION_SECRET || "eventiq-development-secret-change-me";
+  return resolveSecret("SESSION_SECRET", "session");
 }
 
 function signingKey() {

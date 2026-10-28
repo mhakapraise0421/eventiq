@@ -3,6 +3,7 @@ import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:
 import { all, get, run, transaction } from "./db";
 import { randomId } from "./format";
 import { hashPassword, verifyPassword } from "./password";
+import { resolveSecret } from "./secrets";
 import { generateTotpSecret, otpauthUrl, verifyTotp } from "./totp";
 import type { Role, User } from "./types";
 
@@ -27,17 +28,27 @@ export function roleRequiresMfa(role: Role) {
 }
 
 function encryptionKey() {
-  const material =
-    process.env.MFA_ENCRYPTION_KEY ||
-    process.env.SESSION_SECRET ||
-    "eventiq-development-secret-change-me";
-  return scryptSync(material, "eventiq-mfa-v1", 32);
+  return scryptSync(resolveSecret("MFA_ENCRYPTION_KEY", "mfa"), "eventiq-mfa-v1", 32);
 }
 
 let cachedKey: Buffer | null = null;
 function key() {
   if (!cachedKey) cachedKey = encryptionKey();
   return cachedKey;
+}
+
+let cachedLegacyKey: Buffer | null = null;
+// Read-only fallback for secrets encrypted by earlier builds, so an upgraded
+// deployment never locks an already-enrolled user out of their authenticator.
+function legacyKey() {
+  if (!cachedLegacyKey) {
+    const material =
+      process.env.MFA_ENCRYPTION_KEY ||
+      process.env.SESSION_SECRET ||
+      "eventiq-development-secret-change-me";
+    cachedLegacyKey = scryptSync(material, "eventiq-mfa-v1", 32);
+  }
+  return cachedLegacyKey;
 }
 
 function encryptSecret(secret: string) {
@@ -48,12 +59,20 @@ function encryptSecret(secret: string) {
   return ["v1", iv.toString("base64url"), tag.toString("base64url"), encrypted.toString("base64url")].join(".");
 }
 
-function decryptSecret(payload: string) {
+function decryptWith(encryptionKeyValue: Buffer, payload: string) {
   const [version, iv, tag, data] = payload.split(".");
   if (version !== "v1" || !iv || !tag || !data) throw new Error("Unsupported MFA secret format.");
-  const decipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(iv, "base64url"));
+  const decipher = createDecipheriv("aes-256-gcm", encryptionKeyValue, Buffer.from(iv, "base64url"));
   decipher.setAuthTag(Buffer.from(tag, "base64url"));
   return Buffer.concat([decipher.update(Buffer.from(data, "base64url")), decipher.final()]).toString("utf8");
+}
+
+function decryptSecret(payload: string) {
+  try {
+    return decryptWith(key(), payload);
+  } catch {
+    return decryptWith(legacyKey(), payload);
+  }
 }
 
 interface StoredMfa {

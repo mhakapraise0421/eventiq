@@ -1,14 +1,11 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { resolveSecret } from "./secrets";
 
 const CODE_PATTERN = /^EVQ-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/;
 
 function secret() {
-  return (
-    process.env.TICKET_SECRET ||
-    process.env.SESSION_SECRET ||
-    "eventiq-development-ticket-secret"
-  );
+  return resolveSecret("TICKET_SECRET", "ticket");
 }
 
 export function signTicketCode(code: string) {

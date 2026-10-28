@@ -2,8 +2,10 @@ import "server-only";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
+import { randomBytes } from "node:crypto";
 import { SCHEMA_SQL } from "./schema";
 import { seedDatabase } from "./seed";
+import { hashPassword } from "./password";
 
 export type SQLValue = null | number | bigint | string | Uint8Array;
 
@@ -20,6 +22,41 @@ function ensureColumn(
   if (!columns.some((entry) => entry.name === column)) {
     database.exec(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
   }
+}
+
+function demoSeedingEnabled() {
+  const flag = (process.env.SEED_DEMO_DATA || "").trim().toLowerCase();
+  if (flag) return flag === "1" || flag === "true" || flag === "yes";
+  return process.env.NODE_ENV !== "production";
+}
+
+/**
+ * Creates the first administrator on an empty production database from
+ * ADMIN_EMAIL / ADMIN_PASSWORD, so a real deployment never needs the demo
+ * accounts (whose credentials are public) just to get started.
+ */
+function bootstrapAdmin(database: DatabaseSync) {
+  const email = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD || "";
+  if (!email || !password) return false;
+  if (password.length < 12) {
+    console.warn("[eventiq] ADMIN_PASSWORD must be at least 12 characters; skipping admin setup.");
+    return false;
+  }
+  database
+    .prepare(
+      `INSERT INTO users (id, email, password_hash, name, phone, city, role, status, notify_email, notify_sms, notify_whatsapp, created_at)
+       VALUES (?, ?, ?, ?, NULL, NULL, 'admin', 'active', 1, 0, 0, ?)`,
+    )
+    .run(
+      `usr_admin_${randomBytes(6).toString("hex")}`,
+      email,
+      hashPassword(password),
+      (process.env.ADMIN_NAME || "EventIQ Admin").trim(),
+      new Date().toISOString(),
+    );
+  console.warn(`[eventiq] Created the first administrator account for ${email}.`);
+  return true;
 }
 
 function createDatabase() {
@@ -81,7 +118,14 @@ function createDatabase() {
     .prepare("SELECT COUNT(*) AS count FROM users")
     .get() as { count: number };
   if (!row || Number(row.count) === 0) {
-    seedDatabase(database);
+    if (demoSeedingEnabled()) {
+      seedDatabase(database);
+    } else if (!bootstrapAdmin(database)) {
+      console.warn(
+        "[eventiq] The database is empty and demo seeding is disabled. " +
+          "Set ADMIN_EMAIL and ADMIN_PASSWORD (12+ characters) to create the first administrator.",
+      );
+    }
   }
   return database;
 }

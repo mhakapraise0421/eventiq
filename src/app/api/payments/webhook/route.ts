@@ -3,10 +3,26 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { markOrderPaidByReference } from "@/lib/orders";
 import { writeAudit } from "@/lib/audit";
 
+const MAX_PAYLOAD_BYTES = 64 * 1024;
+
 export async function POST(request: Request) {
+  const declaredLength = Number(request.headers.get("content-length") || 0);
+  if (declaredLength > MAX_PAYLOAD_BYTES) {
+    return NextResponse.json({ error: "Payload too large." }, { status: 413 });
+  }
+
   const rawBody = await request.text();
+  if (rawBody.length > MAX_PAYLOAD_BYTES) {
+    return NextResponse.json({ error: "Payload too large." }, { status: 413 });
+  }
+
+  const configuredSecret = (process.env.PAYMENT_WEBHOOK_SECRET || "").trim();
+  if (!configuredSecret && process.env.NODE_ENV === "production") {
+    // A shared fallback secret in production would let anyone forge payments.
+    return NextResponse.json({ error: "Payment webhook is not configured." }, { status: 503 });
+  }
+  const secret = configuredSecret || "eventiq-dev-webhook-secret";
   const signature = request.headers.get("x-eventiq-signature") || "";
-  const secret = process.env.PAYMENT_WEBHOOK_SECRET || "eventiq-dev-webhook-secret";
   const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
   const a = Buffer.from(signature);
   const b = Buffer.from(expected);
@@ -44,6 +60,7 @@ export async function POST(request: Request) {
     data.provider || "provider",
     data.method || "card",
     data.paymentRef || `WEBHOOK-${data.reference}`,
+    typeof data.amountCents === "number" ? data.amountCents : undefined,
   );
 
   if (!result.ok) {

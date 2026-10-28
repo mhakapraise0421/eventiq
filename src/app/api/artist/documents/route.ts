@@ -18,6 +18,11 @@ export async function POST(request: Request) {
 
   let form: FormData;
   try {
+    // Reject oversized bodies before buffering them into memory.
+    const declared = Number(request.headers.get("content-length") || 0);
+    if (declared > MAX_DOCUMENT_BYTES + 64 * 1024) {
+      return jsonError("Documents must be 5 MB or smaller.", 413);
+    }
     form = await request.formData();
   } catch {
     return jsonError("Upload a file using the document form.");

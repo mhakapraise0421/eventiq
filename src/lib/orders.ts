@@ -284,6 +284,7 @@ export function markOrderPaidByReference(
   provider: string,
   method: string,
   paymentRef: string,
+  expectedAmountCents?: number,
 ) {
   const order = get<Order>("SELECT * FROM orders WHERE reference = ?", reference);
   if (!order) return { ok: false as const, error: "Order not found." };
@@ -292,6 +293,9 @@ export function markOrderPaidByReference(
   }
   if (order.status !== "pending") {
     return { ok: false as const, error: `Order is ${order.status}.` };
+  }
+  if (typeof expectedAmountCents === "number" && expectedAmountCents !== order.total_cents) {
+    return { ok: false as const, error: "Paid amount does not match the order total." };
   }
   const result = issueTickets(order.id, method, paymentRef, provider);
   if (!result.ok) {
