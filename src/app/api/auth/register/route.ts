@@ -68,6 +68,9 @@ export async function POST(request: Request) {
     user.created_at,
   );
 
-  await setSessionCookie(user);
+  await setSessionCookie(user, {
+    ip: clientIp(request),
+    userAgent: request.headers.get("user-agent"),
+  });
   return NextResponse.json({ ok: true, user: { id: user.id, name: user.name, role: user.role } });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { all } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { getOrganizerProfile } from "@/lib/admin";
+import { mfaSatisfied } from "@/lib/mfa";
 
 interface SalesRow {
   reference: string;
@@ -50,6 +51,13 @@ export async function GET(request: Request) {
     organizerId = user.id;
   } else if (user.role !== "admin" && user.role !== "ceo") {
     return NextResponse.json({ error: "Not authorised." }, { status: 403 });
+  }
+
+  if (!mfaSatisfied(user)) {
+    return NextResponse.json(
+      { error: "Two-factor authentication is required to export sales data." },
+      { status: 403 },
+    );
   }
 
   const clauses: string[] = [];

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { jsonError, readJson, sameOrigin } from "@/lib/api";
 import { setUserStatus, updateUserRole } from "@/lib/admin";
+import { mfaSatisfied } from "@/lib/mfa";
 import type { Role } from "@/lib/types";
 
 const ROLES: Role[] = ["attendee", "organizer", "artist", "gate", "admin", "ceo"];
@@ -11,6 +12,9 @@ export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || (user.role !== "admin" && user.role !== "ceo")) {
     return jsonError("Not authorised.", 403);
+  }
+  if (!mfaSatisfied(user)) {
+    return jsonError("Two-factor authentication is required for this action.", 403);
   }
 
   const body = await readJson<{

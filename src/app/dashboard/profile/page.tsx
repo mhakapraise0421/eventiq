@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { BadgeCheck, CalendarDays, Mail, ShieldCheck } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { listUserInterests } from "@/lib/attendee";
@@ -75,6 +76,26 @@ export default async function ProfilePage() {
         <div className="mt-5">
           <InterestsPicker initial={interests} />
         </div>
+
+        <Link
+          href="/security"
+          className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-line bg-white p-4 transition hover:border-ink-300"
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+              <ShieldCheck className="h-5 w-5" />
+            </span>
+            <span>
+              <span className="block text-[13.5px] font-semibold text-ink-950">
+                Security &amp; sessions
+              </span>
+              <span className="block text-[11.5px] text-ink-400">
+                Two-factor authentication, recovery codes and signed-in devices.
+              </span>
+            </span>
+          </span>
+          <span className="text-[12px] font-semibold text-brand-700">Manage</span>
+        </Link>
 
         <p className="mt-4 flex items-center gap-1.5 text-[10.5px] text-ink-400">
           <ShieldCheck className="h-3 w-3" /> Need your data removed? Contact support and we

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentSessionId, getCurrentUser, revokeOtherSessions } from "@/lib/auth";
 import { get, run } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { writeAudit } from "@/lib/audit";
-import { jsonError, readJson, sameOrigin } from "@/lib/api";
+import { clientIp, jsonError, readJson, sameOrigin } from "@/lib/api";
 
 export async function PATCH(request: Request) {
   if (!sameOrigin(request)) return jsonError("Invalid request origin.", 403);
@@ -34,6 +34,7 @@ export async function PATCH(request: Request) {
   }
 
   run("UPDATE users SET password_hash = ? WHERE id = ?", hashPassword(newPassword), user.id);
+  const revoked = revokeOtherSessions(user.id, await getCurrentSessionId(), "password_changed");
   writeAudit({
     actorId: user.id,
     actorName: user.name,
@@ -41,8 +42,9 @@ export async function PATCH(request: Request) {
     action: "user.password_changed",
     entityType: "user",
     entityId: user.id,
-    ip: request.headers.get("x-forwarded-for"),
+    ip: clientIp(request),
+    after: { otherSessionsRevoked: revoked },
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, otherSessionsRevoked: revoked });
 }

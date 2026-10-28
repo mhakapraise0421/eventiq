@@ -113,6 +113,12 @@ export async function SiteHeader() {
                   >
                     <UserRound className="h-4 w-4 text-ink-400" /> Profile settings
                   </Link>
+                  <Link
+                    href="/security"
+                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-ink-700 hover:bg-surface"
+                  >
+                    <ShieldCheck className="h-4 w-4 text-ink-400" /> Security & sessions
+                  </Link>
                   <div className="my-1 h-px bg-line" />
                   <form action="/api/auth/logout" method="post">
                     <button

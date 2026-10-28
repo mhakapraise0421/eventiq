@@ -1,6 +1,7 @@
 import "server-only";
 import { all, get, run, transaction } from "./db";
 import { writeAudit } from "./audit";
+import { revokeAllSessions } from "./auth";
 import type {
   AuditLog,
   Device,
@@ -233,6 +234,8 @@ export function setUserStatus(
   );
   if (!before) return { ok: false as const, error: "User not found." };
   run("UPDATE users SET status = ? WHERE id = ?", status, userId);
+  const sessionsRevoked =
+    status === "suspended" ? revokeAllSessions(userId, "suspended") : 0;
   writeAudit({
     actorId: actor.id,
     actorName: actor.name,
@@ -241,7 +244,11 @@ export function setUserStatus(
     entityType: "user",
     entityId: userId,
     before: { status: before.status },
-    after: { status, name: before.name },
+    after: {
+      status,
+      name: before.name,
+      ...(status === "suspended" ? { sessionsRevoked } : {}),
+    },
     ip,
   });
   return { ok: true as const };
