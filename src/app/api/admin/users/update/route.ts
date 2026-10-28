@@ -4,7 +4,7 @@ import { jsonError, readJson, sameOrigin } from "@/lib/api";
 import { setUserStatus, updateUserRole } from "@/lib/admin";
 import type { Role } from "@/lib/types";
 
-const ROLES: Role[] = ["attendee", "organizer", "gate", "admin", "ceo"];
+const ROLES: Role[] = ["attendee", "organizer", "artist", "gate", "admin", "ceo"];
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return jsonError("Invalid request origin.", 403);

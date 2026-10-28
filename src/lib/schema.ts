@@ -217,8 +217,60 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS favorite_events (
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS artist_profiles (
+  user_id TEXT PRIMARY KEY REFERENCES users(id),
+  slug TEXT NOT NULL UNIQUE,
+  stage_name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  genres TEXT,
+  bio TEXT NOT NULL DEFAULT '',
+  city TEXT,
+  region TEXT,
+  profile_image TEXT,
+  cover_image TEXT,
+  website TEXT,
+  instagram TEXT,
+  facebook TEXT,
+  x TEXT,
+  tiktok TEXT,
+  youtube TEXT,
+  media_json TEXT,
+  performance_history TEXT,
+  availability_note TEXT,
+  booking_prefs TEXT,
+  technical_rider TEXT,
+  visibility TEXT NOT NULL DEFAULT 'draft',
+  verification_status TEXT NOT NULL DEFAULT 'not_submitted',
+  accepting_bookings INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS artist_verification_requests (
+  id TEXT PRIMARY KEY,
+  artist_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending',
+  note TEXT,
+  decision_note TEXT,
+  reviewed_by TEXT REFERENCES users(id),
+  reviewed_at TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS artist_documents (
+  id TEXT PRIMARY KEY,
+  artist_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  verification_id TEXT REFERENCES artist_verification_requests(id),
+  label TEXT NOT NULL,
+  file_name TEXT NOT NULL,
+  mime TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  storage_path TEXT NOT NULL,
+  sha256 TEXT NOT NULL,
+  uploaded_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS favorite_events (  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   created_at TEXT NOT NULL,
   PRIMARY KEY (user_id, event_id)
@@ -251,4 +303,12 @@ CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorite_events(user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_recent_user ON recently_viewed_events(user_id, viewed_at);
 CREATE INDEX IF NOT EXISTS idx_interests_user ON user_interests(user_id);
+CREATE INDEX IF NOT EXISTS idx_artist_profiles_visibility
+  ON artist_profiles(visibility, verification_status);
+CREATE INDEX IF NOT EXISTS idx_artist_verifications_status
+  ON artist_verification_requests(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_artist_verifications_artist
+  ON artist_verification_requests(artist_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_artist_documents_artist
+  ON artist_documents(artist_id, uploaded_at);
 `;

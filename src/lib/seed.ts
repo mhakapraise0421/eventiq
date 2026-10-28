@@ -1,4 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import { hashPassword } from "./password";
 import { ticketCode } from "./format";
 
@@ -46,6 +49,38 @@ function makeRandom(seed: number) {
     state = (state * 16807) % 2147483647;
     return (state - 1) / 2147483646;
   };
+}
+
+function demoPdf(title: string, lines: string[]) {
+  const escape = (value: string) =>
+    value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  const content = [title, "", ...lines]
+    .map((line, index) => {
+      const size = index === 0 ? 16 : 11;
+      const y = 760 - index * 28;
+      return `BT /F1 ${size} Tf 56 ${y} Td (${escape(line)}) Tj ET`;
+    })
+    .join("\n");
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+    `<< /Length ${Buffer.byteLength(content, "latin1")} >>\nstream\n${content}\nendstream`,
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  ];
+  let body = "%PDF-1.4\n";
+  const offsets: number[] = [];
+  objects.forEach((object, index) => {
+    offsets.push(Buffer.byteLength(body, "latin1"));
+    body += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xrefOffset = Buffer.byteLength(body, "latin1");
+  body += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (const offset of offsets) {
+    body += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  }
+  body += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+  return Buffer.from(body, "latin1");
 }
 
 interface TierSeed {
@@ -156,6 +191,30 @@ export function seedDatabase(db: DatabaseSync) {
         phone: "+263 77 800 9008",
         city: "Harare",
         role: "ceo",
+      },
+      {
+        id: "usr_artist1",
+        email: "artist@eventiq.co.zw",
+        name: "Tafara Moyo",
+        phone: "+263 77 900 1009",
+        city: "Harare",
+        role: "artist",
+      },
+      {
+        id: "usr_artist2",
+        email: "dj@eventiq.co.zw",
+        name: "Kudzai Mhaka",
+        phone: "+263 71 100 2010",
+        city: "Bulawayo",
+        role: "artist",
+      },
+      {
+        id: "usr_artist3",
+        email: "talent@eventiq.co.zw",
+        name: "Nyari Chikomo",
+        phone: "+263 78 200 3011",
+        city: "Harare",
+        role: "artist",
       },
     ];
 
@@ -271,6 +330,203 @@ export function seedDatabase(db: DatabaseSync) {
         reviewed_by: p.reviewed_by,
         reviewed_at: p.reviewed_at,
         created_at: addDays(now, -65, 9),
+      });
+    }
+
+    const artistProfiles = [
+      {
+        user_id: "usr_artist1",
+        slug: "tafara",
+        stage_name: "TAFARA",
+        category: "Musician",
+        genres: "Afrobeats,Afro-soul,Contemporary",
+        bio: "TAFARA is a Harare-born vocalist and songwriter blending Afro-soul with contemporary Zimbabwean pop. Known for a live band show that moves between acoustic ballads and high-energy grooves, he has headlined stages at the Harare International Festival of the Arts and toured regionally.",
+        city: "Harare",
+        region: "Harare",
+        profile_image: img("portrait of a Zimbabwean male soul singer on stage, dramatic purple stage light, confident, editorial photo", "square"),
+        cover_image: img("concert stage with purple and cyan lighting, silhouetted crowd, atmospheric haze", "landscape_16_9"),
+        website: "https://tafara.example",
+        instagram: "https://instagram.com/tafara.example",
+        facebook: null,
+        x: null,
+        tiktok: null,
+        youtube: "https://youtube.com/@tafara.example",
+        media_json: JSON.stringify([
+          { label: "Live at HIFA 2024", url: "https://youtube.com/watch?v=tafara-hifa" },
+          { label: "Studio session: Moyo Wangu", url: "https://youtube.com/watch?v=tafara-moyo" },
+        ]),
+        performance_history:
+          "HIFA 2024 main stage (Harare)\nZimfest Live 2023 (Bulawayo)\nCorporate gala, Meikles Hotel 2023\nMonthly residency, The Book Cafe 2022–2023",
+        availability_note: "Available for weekend bookings across Zimbabwe, two weeks' notice preferred.",
+        booking_prefs: "Festivals, corporate galas, private celebrations. Outdoor stages welcome.",
+        technical_rider: "Full band (6-piece) or acoustic trio. Requires 4 vocal mics, DI for keys, and a 60-minute soundcheck.",
+        visibility: "published",
+        verification_status: "verified",
+        accepting_bookings: 1,
+        created_at: addDays(now, -70, 10),
+        updated_at: addDays(now, -12, 16),
+      },
+      {
+        user_id: "usr_artist2",
+        slug: "dj-kudzai",
+        stage_name: "DJ Kudzai",
+        category: "DJ",
+        genres: "Amapiano,House,Hip-hop",
+        bio: "Bulawayo-based open-format DJ playing amapiano, afro-house and hip-hop at clubs, weddings and campus events. Resident at The Basement for two years, with a reputation for reading a crowd and keeping a dancefloor moving from first track to last.",
+        city: "Bulawayo",
+        region: "Bulawayo",
+        profile_image: img("portrait of a female Zimbabwean DJ behind turntables, purple club lighting, editorial photo", "square"),
+        cover_image: img("nightclub dancefloor with cyan and purple lights, hands raised, motion blur", "landscape_16_9"),
+        website: null,
+        instagram: "https://instagram.com/djkudzai.example",
+        facebook: "https://facebook.com/djkudzai.example",
+        x: null,
+        tiktok: "https://tiktok.com/@djkudzai.example",
+        youtube: null,
+        media_json: JSON.stringify([
+          { label: "Amapiano mix — Summer 2025", url: "https://soundcloud.com/djkudzai.example/summer" },
+        ]),
+        performance_history:
+          "Resident DJ, The Basement (Bulawayo) 2023–2025\nNUST Freshers' Party 2024\nAmapiano Sundays, Bulawayo 2024",
+        availability_note: "Club and event bookings in Bulawayo and Harare. Travel negotiable.",
+        booking_prefs: "Clubs, weddings, campus events, private parties.",
+        technical_rider: "2 CDJs and a 4-channel mixer, or bring own controller. Needs booth monitors.",
+        visibility: "published",
+        verification_status: "pending",
+        accepting_bookings: 1,
+        created_at: addDays(now, -28, 9),
+        updated_at: addDays(now, -3, 21),
+      },
+      {
+        user_id: "usr_artist3",
+        slug: "nyari-chikomo",
+        stage_name: "Nyari Chikomo",
+        category: "Comedian",
+        genres: "Stand-up,Spoken word",
+        bio: "Stand-up comedian and spoken-word performer working the Harare open-mic circuit. Nyari writes about family, city life and the small absurdities of Zimbabwean daily routines, and is building a first full-length set.",
+        city: "Harare",
+        region: "Harare",
+        profile_image: img("portrait of a Zimbabwean comedian on a small stage with a microphone, warm light, editorial photo", "square"),
+        cover_image: null,
+        website: null,
+        instagram: "https://instagram.com/nyari.example",
+        facebook: null,
+        x: "https://x.com/nyari.example",
+        tiktok: null,
+        youtube: null,
+        media_json: "[]",
+        performance_history: "Open-mic nights, House of Hunger (Harare) 2024–2025\nCorporate year-end function, 2024",
+        availability_note: null,
+        booking_prefs: "Comedy nights, corporate functions, mixed variety shows.",
+        technical_rider: "Handheld mic, mic stand and a small stage light. 15-minute soundcheck.",
+        visibility: "draft",
+        verification_status: "requires_info",
+        accepting_bookings: 1,
+        created_at: addDays(now, -10, 15),
+        updated_at: addDays(now, -4, 11),
+      },
+    ];
+
+    for (const p of artistProfiles) {
+      insert(db, "artist_profiles", p);
+    }
+
+    const artistVerifications = [
+      {
+        id: "avr_tafara_1",
+        artist_id: "usr_artist1",
+        status: "verified",
+        note: "Identity documents and performance evidence attached.",
+        decision_note: "Documents matched and performance history confirmed. Verified.",
+        reviewed_by: "usr_admin",
+        reviewed_at: addDays(now, -30, 12),
+        created_at: addDays(now, -33, 9),
+      },
+      {
+        id: "avr_kudzai_1",
+        artist_id: "usr_artist2",
+        status: "pending",
+        note: "Submitted national ID and a residency confirmation letter.",
+        decision_note: null,
+        reviewed_by: null,
+        reviewed_at: null,
+        created_at: addDays(now, -3, 21),
+      },
+      {
+        id: "avr_nyari_1",
+        artist_id: "usr_artist3",
+        status: "requires_info",
+        note: "Uploaded a phone bill as proof of identity.",
+        decision_note:
+          "Please upload a national ID or passport instead, and a document confirming at least one paid performance.",
+        reviewed_by: "usr_admin",
+        reviewed_at: addDays(now, -4, 10),
+        created_at: addDays(now, -8, 14),
+      },
+    ];
+
+    for (const request of artistVerifications) {
+      insert(db, "artist_verification_requests", request);
+    }
+
+    const docsRoot =
+      process.env.PRIVATE_STORAGE_PATH || path.join(process.cwd(), ".data", "private");
+    const artistDocs = [
+      {
+        id: "doc_tafara_id",
+        artist_id: "usr_artist1",
+        verification_id: "avr_tafara_1",
+        label: "National ID",
+        file_name: "tafara-national-id-demo.pdf",
+        lines: ["Demo identity document", "Not a real national ID.", "Generated for the EventIQ demo database."],
+        uploaded_at: addDays(now, -33, 9),
+      },
+      {
+        id: "doc_tafara_evidence",
+        artist_id: "usr_artist1",
+        verification_id: "avr_tafara_1",
+        label: "Performance evidence",
+        file_name: "tafara-performance-letter-demo.pdf",
+        lines: ["Demo performance confirmation", "HIFA 2024 main stage booking letter.", "Generated for the EventIQ demo database."],
+        uploaded_at: addDays(now, -33, 9),
+      },
+      {
+        id: "doc_kudzai_id",
+        artist_id: "usr_artist2",
+        verification_id: "avr_kudzai_1",
+        label: "National ID",
+        file_name: "kudzai-national-id-demo.pdf",
+        lines: ["Demo identity document", "Not a real national ID.", "Generated for the EventIQ demo database."],
+        uploaded_at: addDays(now, -3, 21),
+      },
+      {
+        id: "doc_nyari_id",
+        artist_id: "usr_artist3",
+        verification_id: "avr_nyari_1",
+        label: "Proof of address",
+        file_name: "nyari-utility-bill-demo.pdf",
+        lines: ["Demo utility bill", "Not a real document.", "Generated for the EventIQ demo database."],
+        uploaded_at: addDays(now, -8, 14),
+      },
+    ];
+
+    for (const doc of artistDocs) {
+      const bytes = demoPdf(doc.label, doc.lines);
+      const relative = `artist-docs/${doc.artist_id}/${doc.id}.pdf`;
+      const target = path.join(docsRoot, relative);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, bytes);
+      insert(db, "artist_documents", {
+        id: doc.id,
+        artist_id: doc.artist_id,
+        verification_id: doc.verification_id,
+        label: doc.label,
+        file_name: doc.file_name,
+        mime: "application/pdf",
+        size: bytes.length,
+        storage_path: relative.replace(/\\/g, "/"),
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+        uploaded_at: doc.uploaded_at,
       });
     }
 

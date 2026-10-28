@@ -45,6 +45,7 @@ export function SiteFooter() {
               <li><Link href="/events?category=Festivals" className="hover:text-white">Festivals</Link></li>
               <li><Link href="/events?category=Nightlife" className="hover:text-white">Nightlife</Link></li>
               <li><Link href="/events?category=Conferences" className="hover:text-white">Conferences</Link></li>
+              <li><Link href="/artists" className="hover:text-white">Artist directory</Link></li>
             </ul>
           </div>
 
@@ -54,6 +55,7 @@ export function SiteFooter() {
             </p>
             <ul className="mt-4 space-y-2.5 text-[13.5px] text-white/65">
               <li><Link href="/organizer/apply" className="hover:text-white">Apply to sell</Link></li>
+              <li><Link href="/artist/apply" className="hover:text-white">Join as an artist</Link></li>
               <li><Link href="/organizer" className="hover:text-white">Organizer dashboard</Link></li>
               <li><Link href="/scan" className="hover:text-white">Gate staff scanner</Link></li>
               <li><Link href="/admin" className="hover:text-white">Administration</Link></li>

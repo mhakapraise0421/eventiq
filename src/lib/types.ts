@@ -1,4 +1,4 @@
-export type Role = "attendee" | "organizer" | "gate" | "admin" | "ceo";
+export type Role = "attendee" | "organizer" | "artist" | "gate" | "admin" | "ceo";
 
 export type EventStatus =
   | "draft"
@@ -200,8 +200,7 @@ export interface ScanEvent {
   ticket_type_name?: string;
 }
 
-export type GateKind = "turnstile" | "overhead" | "handheld";
-export type GateDirection = "in" | "out" | "both";
+export type GateKind = "turnstile" | "overhead" | "handheld";export type GateDirection = "in" | "out" | "both";
 export type GateStatus = "active" | "maintenance" | "closed";
 
 export interface Gate {
@@ -289,4 +288,90 @@ export interface StaffAssignment {
   event_starts_at: string;
   user_name: string;
   user_email: string;
+}
+
+export type ArtistVerificationStatus =
+  | "not_submitted"
+  | "pending"
+  | "requires_info"
+  | "verified"
+  | "rejected";
+
+export type ArtistVisibility = "draft" | "published";
+
+export interface ArtistProfile {
+  user_id: string;
+  slug: string;
+  stage_name: string;
+  category: string;
+  genres: string | null;
+  bio: string;
+  city: string | null;
+  region: string | null;
+  profile_image: string | null;
+  cover_image: string | null;
+  website: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  x: string | null;
+  tiktok: string | null;
+  youtube: string | null;
+  media_json: string | null;
+  performance_history: string | null;
+  availability_note: string | null;
+  booking_prefs: string | null;
+  technical_rider: string | null;
+  visibility: ArtistVisibility;
+  verification_status: ArtistVerificationStatus;
+  accepting_bookings: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ArtistProfileWithUser extends ArtistProfile {
+  user_name: string;
+  user_email: string;
+  user_phone: string | null;
+}
+
+export interface ArtistVerificationRequest {
+  id: string;
+  artist_id: string;
+  status: Exclude<ArtistVerificationStatus, "not_submitted">;
+  note: string | null;
+  decision_note: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+export interface ArtistVerificationWithArtist extends ArtistVerificationRequest {
+  stage_name: string;
+  slug: string;
+  category: string;
+  city: string | null;
+  bio: string;
+  visibility: ArtistVisibility;
+  user_name: string;
+  user_email: string;
+  user_phone: string | null;
+  document_count?: number;
+}
+
+export interface ArtistDocument {
+  id: string;
+  artist_id: string;
+  verification_id: string | null;
+  label: string;
+  file_name: string;
+  mime: string;
+  size: number;
+  storage_path: string;
+  sha256: string;
+  uploaded_at: string;
+}
+
+export interface ArtistMediaLink {
+  label: string;
+  url: string;
 }

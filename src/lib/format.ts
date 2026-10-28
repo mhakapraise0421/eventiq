@@ -205,9 +205,18 @@ export const EVENT_STATUS_LABEL: Record<string, string> = {
 export const ROLE_LABEL: Record<string, string> = {
   attendee: "Attendee",
   organizer: "Organizer",
+  artist: "Artist",
   gate: "Gate staff",
   admin: "Administrator",
   ceo: "CEO",
+};
+
+export const ARTIST_VERIFICATION_LABEL: Record<string, string> = {
+  not_submitted: "Not submitted",
+  pending: "Pending review",
+  requires_info: "More information needed",
+  verified: "Verified",
+  rejected: "Rejected",
 };
 
 export function statusTone(status: string) {
@@ -216,10 +225,12 @@ export function statusTone(status: string) {
     case "paid":
     case "active":
     case "accepted":
+    case "verified":
       return "bg-emerald-50 text-emerald-700 border border-emerald-200";
     case "pending":
     case "duplicate":
     case "requires_modification":
+    case "requires_info":
       return "bg-amber-50 text-amber-700 border border-amber-200";
     case "rejected":
     case "invalid":
@@ -235,6 +246,7 @@ export function statusTone(status: string) {
     case "expired":
     case "void":
     case "retired":
+    case "not_submitted":
       return "bg-zinc-100 text-zinc-600 border border-zinc-200";
     case "used":
     case "completed":

@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Mic,
   ScanLine,
   Search,
   ShieldCheck,
@@ -17,6 +18,7 @@ import { Logo } from "./logo";
 
 function consoleLink(role: string) {
   if (role === "organizer") return { href: "/organizer", label: "Organizer dashboard", icon: Sparkles };
+  if (role === "artist") return { href: "/artist", label: "Artist dashboard", icon: Mic };
   if (role === "gate") return { href: "/scan", label: "Gate scanner", icon: ScanLine };
   if (role === "admin" || role === "ceo") return { href: "/admin", label: "Admin console", icon: ShieldCheck };
   return { href: "/dashboard", label: "My tickets", icon: Ticket };
@@ -38,6 +40,9 @@ export async function SiteHeader() {
             </Link>
             <Link href="/events?date=week" className="transition-colors hover:text-ink-950">
               This week
+            </Link>
+            <Link href="/artists" className="transition-colors hover:text-ink-950">
+              Artists
             </Link>
             <Link href="/organizer/apply" className="transition-colors hover:text-ink-950">
               For organizers
@@ -139,8 +144,14 @@ export async function SiteHeader() {
               <Link href="/events" className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-ink-700 hover:bg-surface">
                 <Search className="h-4 w-4 text-ink-400" /> Discover events
               </Link>
+              <Link href="/artists" className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-ink-700 hover:bg-surface">
+                <Mic className="h-4 w-4 text-ink-400" /> Artist directory
+              </Link>
               <Link href="/organizer/apply" className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-ink-700 hover:bg-surface">
                 <Sparkles className="h-4 w-4 text-ink-400" /> For organizers
+              </Link>
+              <Link href="/artist/apply" className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-ink-700 hover:bg-surface">
+                <Mic className="h-4 w-4 text-ink-400" /> For artists
               </Link>
               <Link href="/dashboard" className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-ink-700 hover:bg-surface">
                 <LayoutDashboard className="h-4 w-4 text-ink-400" /> My account

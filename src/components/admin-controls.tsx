@@ -322,7 +322,7 @@ export function UserAdminControls({
           value={nextRole}
           onChange={(event) => setNextRole(event.target.value)}
         >
-          {(["attendee", "organizer", "gate", "admin", "ceo"] as Role[]).map((item) => (
+          {(["attendee", "organizer", "artist", "gate", "admin", "ceo"] as Role[]).map((item) => (
             <option key={item} value={item}>
               {ROLE_LABEL[item]}
             </option>
