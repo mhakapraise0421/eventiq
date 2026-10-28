@@ -29,6 +29,7 @@ export const metadata: Metadata = { title: "Organizer dashboard" };
 const tabs = [
   { href: "/organizer", label: "Overview" },
   { href: "/organizer/events", label: "Events" },
+  { href: "/organizer/artists", label: "Artists" },
   { href: "/organizer/reports", label: "Reports" },
   { href: "/organizer/apply", label: "Application" },
 ];

@@ -1482,6 +1482,103 @@ export function seedDatabase(db: DatabaseSync) {
       });
     }
 
+    const bookings = [
+      {
+        id: "bkg_zimfest_tafara",
+        artist_id: "usr_artist1",
+        organizer_id: "usr_org1",
+        event_id: "evt_zimfest",
+        status: "accepted",
+        proposed_fee_cents: 120000,
+        message:
+          "We would love TAFARA to headline the main stage on day two. Full band, 60-minute set, soundcheck at 15:00.",
+        response_note: null,
+        created_at: addDays(now, -12, 10),
+        responded_at: addDays(now, -11, 16),
+      },
+      {
+        id: "bkg_roora_tafara",
+        artist_id: "usr_artist1",
+        organizer_id: "usr_org2",
+        event_id: "evt_roora",
+        status: "requested",
+        proposed_fee_cents: 85000,
+        message:
+          "An acoustic set during the dinner service would suit the evening perfectly. Two 25-minute sets with a short break.",
+        response_note: null,
+        created_at: addDays(now, -2, 9),
+        responded_at: null,
+      },
+      {
+        id: "bkg_gospel_tafara",
+        artist_id: "usr_artist1",
+        organizer_id: "usr_org1",
+        event_id: "evt_gospel",
+        status: "requested",
+        proposed_fee_cents: null,
+        message:
+          "Would you be open to closing the evening with two worship songs? We can discuss the fee once the running order is confirmed.",
+        response_note: null,
+        created_at: addDays(now, -1, 14),
+        responded_at: null,
+      },
+      {
+        id: "bkg_rooftop_tafara",
+        artist_id: "usr_artist1",
+        organizer_id: "usr_org1",
+        event_id: "evt_rooftop",
+        status: "declined",
+        proposed_fee_cents: 40000,
+        message: "A 45-minute sunset set on the rooftop.",
+        response_note: "Already committed to a private function that evening — happy to discuss the next session.",
+        created_at: addDays(now, -8, 11),
+        responded_at: addDays(now, -7, 8),
+      },
+      {
+        id: "bkg_neon_kudzai",
+        artist_id: "usr_artist2",
+        organizer_id: "usr_org1",
+        event_id: "evt_neon",
+        status: "requested",
+        proposed_fee_cents: 60000,
+        message:
+          "We are holding a 30-minute amapiano slot on the second stage between 23:00 and midnight.",
+        response_note: null,
+        created_at: addDays(now, -1, 18),
+        responded_at: null,
+      },
+    ];
+
+    for (const booking of bookings) {
+      insert(db, "artist_bookings", {
+        ...booking,
+        currency: "USD",
+      });
+    }
+
+    const availabilityBlocks = [
+      {
+        id: "avl_studio_tafara",
+        artist_id: "usr_artist1",
+        starts_at: addDays(now, 4, 9),
+        ends_at: addDays(now, 6, 22),
+        note: "Studio rehearsals — private",
+        created_at: addDays(now, -3, 9),
+      },
+      {
+        id: "avl_tour_kudzai",
+        artist_id: "usr_artist2",
+        starts_at: addDays(now, 12, 8),
+        ends_at: addDays(now, 16, 20),
+        note: "Regional tour — Bulawayo and Gweru",
+        created_at: addDays(now, -5, 12),
+      },
+    ];
+
+    for (const block of availabilityBlocks) {
+      insert(db, "artist_availability", block);
+    }
+
     const auditLogs = [
       {
         actor_id: "usr_ceo",

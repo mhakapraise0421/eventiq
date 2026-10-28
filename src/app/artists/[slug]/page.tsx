@@ -12,6 +12,10 @@ import {
   Mic,
 } from "lucide-react";
 import { getPublishedArtistBySlug, parseGenres, parseMedia } from "@/lib/artists";
+import { getCurrentUser } from "@/lib/auth";
+import { getOrganizerProfile } from "@/lib/admin";
+import { listOrganizerBookableEvents } from "@/lib/bookings";
+import { BookingRequestForm } from "@/components/booking-request-form";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +44,10 @@ export default async function ArtistPublicPage({
 
   const genres = parseGenres(artist);
   const media = parseMedia(artist);
+  const viewer = await getCurrentUser();
+  const viewerOrganizer = viewer?.role === "organizer" ? getOrganizerProfile(viewer.id) : undefined;
+  const canRequest = !!viewer && viewerOrganizer?.status === "approved";
+  const bookableEvents = canRequest && viewer ? listOrganizerBookableEvents(viewer.id) : [];
   const socials = [
     ["Website", artist.website],
     ["Instagram", artist.instagram],
@@ -223,13 +231,60 @@ export default async function ArtistPublicPage({
               <h2 className="font-display text-[14px] font-semibold tracking-[-0.02em] text-brand-900">
                 Booking requests
               </h2>
-              <p className="mt-1.5 text-[11.5px] leading-relaxed text-brand-900/70">
-                Organizer booking requests, negotiations and performance calendars are the next
-                phase of the artist module. They are not open yet.
-              </p>
-              <button type="button" className="btn btn-outline btn-sm mt-3" disabled>
-                Request booking — coming soon
-              </button>
+              {artist.accepting_bookings ? (
+                <>
+                  <p className="mt-1.5 text-[11.5px] leading-relaxed text-brand-900/70">
+                    {canRequest
+                      ? "Send a request tied to one of your upcoming events. The artist accepts or declines from their calendar."
+                      : viewer?.id === artist.user_id
+                        ? "This is your public booking card. Review incoming requests from your console."
+                        : "Approved organizers can request this artist for one of their events."}
+                  </p>
+
+                  {viewer?.id === artist.user_id ? (
+                    <Link href="/artist/bookings" className="btn btn-outline btn-sm mt-3">
+                      Open booking requests
+                    </Link>
+                  ) : canRequest ? (
+                    <div className="mt-3">
+                      <BookingRequestForm
+                        artist={{
+                          id: artist.user_id,
+                          stageName: artist.stage_name,
+                          verified: artist.verification_status === "verified",
+                        }}
+                        events={bookableEvents}
+                      />
+                    </div>
+                  ) : viewer ? (
+                    viewer.role === "organizer" ? (
+                      <Link href="/organizer/apply" className="btn btn-outline btn-sm mt-3">
+                        Complete organizer application
+                      </Link>
+                    ) : (
+                      <p className="mt-3 text-[10.5px] leading-relaxed text-brand-900/60">
+                        Booking requests are available to approved organizer accounts.{" "}
+                        <Link href="/organizer/apply" className="font-semibold underline">
+                          Apply to become an organizer
+                        </Link>
+                        .
+                      </p>
+                    )
+                  ) : (
+                    <Link
+                      href={`/login?next=${encodeURIComponent(`/artists/${artist.slug}`)}`}
+                      className="btn btn-outline btn-sm mt-3"
+                    >
+                      Sign in as an organizer
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <p className="mt-1.5 text-[11.5px] leading-relaxed text-brand-900/70">
+                  This artist has paused booking requests for now. Check back later or reach out
+                  through the links above.
+                </p>
+              )}
             </section>
           </aside>
         </div>

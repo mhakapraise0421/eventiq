@@ -375,3 +375,50 @@ export interface ArtistMediaLink {
   label: string;
   url: string;
 }
+
+export type BookingStatus =
+  | "requested"
+  | "accepted"
+  | "declined"
+  | "withdrawn"
+  | "cancelled";
+
+export interface ArtistBooking {
+  id: string;
+  artist_id: string;
+  organizer_id: string;
+  event_id: string;
+  status: BookingStatus;
+  proposed_fee_cents: number | null;
+  currency: string;
+  message: string | null;
+  response_note: string | null;
+  created_at: string;
+  responded_at: string | null;
+}
+
+export interface ArtistBookingWithEvent extends ArtistBooking {
+  event_title: string;
+  event_slug: string;
+  event_starts_at: string;
+  event_ends_at: string | null;
+  event_venue: string;
+  event_city: string;
+  event_status: string;
+  artist_stage_name: string;
+  artist_slug: string;
+  artist_verification_status: ArtistVerificationStatus;
+  organizer_name: string;
+  organizer_business: string | null;
+  organizer_email: string;
+  organizer_phone: string | null;
+}
+
+export interface ArtistAvailability {
+  id: string;
+  artist_id: string;
+  starts_at: string;
+  ends_at: string;
+  note: string | null;
+  created_at: string;
+}

@@ -3,10 +3,11 @@ import Link from "next/link";
 import {
   ArrowRight,
   BadgeCheck,
+  CalendarDays,
   CircleAlert,
   Eye,
+  Inbox,
   ListChecks,
-  Mic,
   Pencil,
 } from "lucide-react";
 import { requireArtistPage } from "@/lib/guards";
@@ -16,6 +17,7 @@ import {
   parseGenres,
   profileGaps,
 } from "@/lib/artists";
+import { listArtistBookings } from "@/lib/bookings";
 import { formatDate } from "@/lib/format";
 import { ConsoleHeader } from "@/components/console-header";
 import { artistTabs } from "@/components/artist-tabs";
@@ -31,6 +33,21 @@ export default async function ArtistOverviewPage() {
   const history = listArtistVerificationHistory(profile.user_id);
   const latest = history[0];
   const genres = parseGenres(profile);
+  const bookings = listArtistBookings(profile.user_id);
+  const now = Date.now();
+  const pendingCount = bookings.filter(
+    (booking) =>
+      booking.status === "requested" && new Date(booking.event_starts_at).getTime() > now,
+  ).length;
+  const nextConfirmed = bookings
+    .filter(
+      (booking) =>
+        booking.status === "accepted" && new Date(booking.event_starts_at).getTime() > now,
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.event_starts_at).getTime() - new Date(b.event_starts_at).getTime(),
+    )[0];
 
   return (
     <div className="min-h-[70vh] bg-surface/40 pb-16">
@@ -173,14 +190,40 @@ export default async function ArtistOverviewPage() {
           </section>
         )}
 
-        <section className="rounded-2xl border border-dashed border-line bg-white/60 p-5">
-          <p className="flex items-center gap-2 text-[12px] font-semibold text-ink-700">
-            <Mic className="h-4 w-4 text-brand-600" /> What comes next
-          </p>
-          <p className="mt-1.5 text-[11px] leading-relaxed text-ink-400">
-            Booking requests, performance calendars, agreements and earnings reporting are the next
-            phases of the artist module. They are not available yet, and this page will never show
-            financial figures that are not backed by real records.
+        <section className="rounded-2xl border border-line bg-white p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="flex items-center gap-2 text-[13px] font-semibold text-ink-950">
+                <CalendarDays className="h-4 w-4 text-brand-600" /> Bookings and calendar
+              </p>
+              <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-ink-500">
+                <span className="inline-flex items-center gap-1">
+                  <Inbox className="h-3.5 w-3.5 text-ink-400" /> {pendingCount} awaiting your
+                  response
+                </span>
+                <span>
+                  {nextConfirmed
+                    ? `Next confirmed: ${nextConfirmed.event_title} · ${formatDate(
+                        nextConfirmed.event_starts_at,
+                      )}`
+                    : "No confirmed bookings yet."}
+                </span>
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Link href="/artist/bookings" className="btn btn-outline btn-sm">
+                Bookings
+              </Link>
+              <Link href="/artist/calendar" className="btn btn-primary btn-sm">
+                Calendar
+              </Link>
+            </div>
+          </div>
+          <p className="mt-3 text-[10.5px] leading-relaxed text-ink-400">
+            {profile.accepting_bookings
+              ? "Your profile is listed as accepting booking requests."
+              : "Booking requests are paused — organizers cannot request you until you resume."}{" "}
+            Proposed fees are discussion points only; they are never counted as earnings.
           </p>
         </section>
       </div>

@@ -312,6 +312,39 @@ CREATE INDEX IF NOT EXISTS idx_artist_verifications_artist
 CREATE INDEX IF NOT EXISTS idx_artist_documents_artist
   ON artist_documents(artist_id, uploaded_at);
 
+CREATE TABLE IF NOT EXISTS artist_bookings (
+  id TEXT PRIMARY KEY,
+  artist_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  organizer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'requested',
+  proposed_fee_cents INTEGER,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  message TEXT,
+  response_note TEXT,
+  created_at TEXT NOT NULL,
+  responded_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS artist_availability (
+  id TEXT PRIMARY KEY,
+  artist_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  starts_at TEXT NOT NULL,
+  ends_at TEXT NOT NULL,
+  note TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_artist_bookings_artist
+  ON artist_bookings(artist_id, status);
+CREATE INDEX IF NOT EXISTS idx_artist_bookings_organizer
+  ON artist_bookings(organizer_id, created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_artist_bookings_active
+  ON artist_bookings(artist_id, event_id)
+  WHERE status IN ('requested', 'accepted');
+CREATE INDEX IF NOT EXISTS idx_artist_availability_artist
+  ON artist_availability(artist_id, starts_at);
+
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
