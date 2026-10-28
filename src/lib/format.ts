@@ -257,6 +257,17 @@ export const INVOICE_PAYMENT_LABEL: Record<string, string> = {
   void: "Void",
 };
 
+export const ARTIST_REPORT_TYPE_LABEL: Record<string, string> = {
+  monthly_earnings: "Monthly earnings report",
+  annual_earnings: "Annual earnings report",
+  quarterly_earnings: "Quarterly earnings report",
+  payment_history: "Payment history report",
+  outstanding_payments: "Outstanding payments report",
+  booking_performance: "Booking performance report",
+  custom_financial: "Custom financial report",
+  artist_activity: "Artist activity report",
+};
+
 const civilDateFmt = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "short",

@@ -555,6 +555,39 @@ export interface ArtistInvoice {
   organizer_business?: string | null;
 }
 
+export type ArtistReportType =
+  | "monthly_earnings"
+  | "annual_earnings"
+  | "quarterly_earnings"
+  | "payment_history"
+  | "outstanding_payments"
+  | "booking_performance"
+  | "custom_financial"
+  | "artist_activity";
+
+export type ReportPaymentFilter = "all" | PaymentStatus;
+export type ReportBookingFilter = "all" | BookingStatus;
+
+export interface ArtistReport {
+  id: string;
+  artist_id: string;
+  report_type: ArtistReportType;
+  period_start: string;
+  period_end: string;
+  payment_status: ReportPaymentFilter | null;
+  booking_status: ReportBookingFilter | null;
+  currency: string;
+  status: string;
+  storage_key: string;
+  pdf_sha256: string;
+  data_sha256: string;
+  bytes: number;
+  generated_by: string;
+  supersedes_id: string | null;
+  superseded_by_id: string | null;
+  created_at: string;
+}
+
 export interface AgreementTermsInput {
   fee?: unknown;
   deposit?: unknown;

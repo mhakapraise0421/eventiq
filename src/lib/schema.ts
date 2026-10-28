@@ -432,6 +432,29 @@ CREATE INDEX IF NOT EXISTS idx_artist_payments_agreement
 CREATE INDEX IF NOT EXISTS idx_artist_payments_artist
   ON artist_payments(artist_id, paid_on);
 
+CREATE TABLE IF NOT EXISTS artist_reports (
+  id TEXT PRIMARY KEY,
+  artist_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  report_type TEXT NOT NULL,
+  period_start TEXT NOT NULL,
+  period_end TEXT NOT NULL,
+  payment_status TEXT,
+  booking_status TEXT,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  status TEXT NOT NULL DEFAULT 'generated',
+  storage_key TEXT NOT NULL UNIQUE,
+  pdf_sha256 TEXT NOT NULL,
+  data_sha256 TEXT NOT NULL,
+  bytes INTEGER NOT NULL,
+  generated_by TEXT NOT NULL REFERENCES users(id),
+  supersedes_id TEXT REFERENCES artist_reports(id) ON DELETE SET NULL,
+  superseded_by_id TEXT REFERENCES artist_reports(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_artist_reports_artist
+  ON artist_reports(artist_id, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
