@@ -29,6 +29,18 @@ const CHIP_STYLE: Record<DayItem["type"], string> = {
   unavailable: "bg-zinc-100 text-zinc-600 ring-zinc-200",
 };
 
+const ITEM_DOT: Record<DayItem["type"], string> = {
+  accepted: "bg-emerald-500",
+  requested: "bg-amber-400",
+  unavailable: "bg-zinc-400",
+};
+
+const ITEM_WORD: Record<DayItem["type"], string> = {
+  accepted: "Confirmed",
+  requested: "Awaiting response",
+  unavailable: "Unavailable",
+};
+
 export default async function ArtistCalendarPage({
   searchParams,
 }: {
@@ -138,7 +150,7 @@ export default async function ArtistCalendarPage({
             <span className="text-ink-400">Times shown in Africa/Harare (CAT)</span>
           </div>
 
-          <div className="hide-scrollbar mt-3 overflow-x-auto">
+          <div className="hide-scrollbar mt-3 overflow-x-auto lg:overflow-visible">
             <div className="min-w-[680px]">
               <div className="grid grid-cols-7 gap-1">
                 {WEEKDAY_LABELS.map((label) => (
@@ -149,12 +161,12 @@ export default async function ArtistCalendarPage({
                     {label}
                   </div>
                 ))}
-                {meta.days.map((day) => {
+                {meta.days.map((day, dayIndex) => {
                   const items = itemsByDay.get(day.key) || [];
                   return (
                     <div
                       key={day.key}
-                      className={`min-h-[82px] rounded-lg border p-1.5 ${
+                      className={`group relative min-h-[82px] rounded-lg border p-1.5 ${
                         day.isToday
                           ? "border-brand-300 bg-brand-50/40"
                           : day.inMonth
@@ -187,6 +199,36 @@ export default async function ArtistCalendarPage({
                           <p className="px-1 text-[9px] text-ink-400">+{items.length - 2} more</p>
                         ) : null}
                       </div>
+
+                      {items.length ? (
+                        <div
+                          className={`pointer-events-none absolute top-full z-30 mt-1 hidden w-60 rounded-xl border border-line bg-white p-3 text-left opacity-0 shadow-xl ring-1 ring-black/5 transition duration-150 group-hover:opacity-100 lg:block ${
+                            dayIndex % 7 >= 5 ? "right-0" : "left-0"
+                          }`}
+                        >
+                          <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-400">
+                            {formatDate(day.key)}
+                          </p>
+                          <ul className="mt-1.5 space-y-1.5">
+                            {items.map((item, index) => (
+                              <li key={`${item.label}-${index}`} className="flex items-start gap-2">
+                                <span
+                                  className={`mt-1 h-2 w-2 shrink-0 rounded-full ${ITEM_DOT[item.type]}`}
+                                />
+                                <div className="min-w-0">
+                                  <p className="truncate text-[11.5px] font-semibold text-ink-900">
+                                    {item.label}
+                                  </p>
+                                  <p className="text-[10px] text-ink-400">
+                                    {item.time ? `${item.time} · ` : ""}
+                                    {ITEM_WORD[item.type]}
+                                  </p>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
