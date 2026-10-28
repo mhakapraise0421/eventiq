@@ -19,9 +19,12 @@ export function signTicketCode(code: string) {
   return `EVQ1|${code}|${signature}`;
 }
 
-export function parseScannedPayload(input: string): string | null {
+export function parseScannedPayload(
+  input: string,
+  options: { requireSignature?: boolean } = {},
+): string | null {
   const value = input.trim();
-  if (CODE_PATTERN.test(value)) return value;
+  if (CODE_PATTERN.test(value)) return options.requireSignature ? null : value;
   if (!value.startsWith("EVQ1|")) return null;
   const [, code, signature] = value.split("|");
   if (!code || !signature || !CODE_PATTERN.test(code)) return null;

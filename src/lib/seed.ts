@@ -1125,6 +1125,43 @@ export function seedDatabase(db: DatabaseSync) {
       });
     }
 
+    const gates = [
+      {
+        id: "gate_neon_a",
+        event_id: "evt_neon",
+        name: "Gate A",
+        kind: "turnstile",
+        direction: "in",
+        status: "active",
+        open_ms: 600,
+      },
+      {
+        id: "gate_neon_vip",
+        event_id: "evt_neon",
+        name: "VIP lane",
+        kind: "overhead",
+        direction: "in",
+        status: "active",
+        open_ms: 800,
+      },
+      {
+        id: "gate_jazz_main",
+        event_id: "evt_jazz",
+        name: "Main gate",
+        kind: "turnstile",
+        direction: "in",
+        status: "active",
+        open_ms: 600,
+      },
+    ];
+    for (const gate of gates) {
+      insert(db, "gates", {
+        ...gate,
+        created_at: addDays(now, -40, 9),
+        updated_at: addDays(now, -2, 9),
+      });
+    }
+
     const devices = [
       {
         id: "dev_scanner_a",
@@ -1134,6 +1171,7 @@ export function seedDatabase(db: DatabaseSync) {
         status: "active",
         assigned_event_id: "evt_neon",
         assigned_staff_id: "usr_gate",
+        gate_id: "gate_neon_a",
         assigned_at: addDays(now, -5, 9),
       },
       {
@@ -1144,7 +1182,19 @@ export function seedDatabase(db: DatabaseSync) {
         status: "active",
         assigned_event_id: "evt_jazz",
         assigned_staff_id: "usr_gate",
+        gate_id: "gate_jazz_main",
         assigned_at: addDays(now, -30, 9),
+      },
+      {
+        id: "dev_neon_ctrl",
+        name: "Gate A Turnstile Controller",
+        serial: "CTL-2026-0101",
+        type: "gate_controller",
+        status: "active",
+        assigned_event_id: "evt_neon",
+        assigned_staff_id: null,
+        gate_id: "gate_neon_a",
+        assigned_at: addDays(now, -5, 9),
       },
       {
         id: "dev_printer_1",
@@ -1154,6 +1204,7 @@ export function seedDatabase(db: DatabaseSync) {
         status: "active",
         assigned_event_id: null,
         assigned_staff_id: null,
+        gate_id: null,
         assigned_at: null,
       },
       {
@@ -1164,6 +1215,7 @@ export function seedDatabase(db: DatabaseSync) {
         status: "maintenance",
         assigned_event_id: null,
         assigned_staff_id: null,
+        gate_id: null,
         assigned_at: null,
       },
     ];

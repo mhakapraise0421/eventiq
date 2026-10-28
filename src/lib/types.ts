@@ -190,10 +190,36 @@ export interface ScanEvent {
   scanned_by: string | null;
   scanner_name: string | null;
   device_id: string | null;
+  client_scan_id?: string | null;
+  source?: string;
+  gate_id?: string | null;
+  mode?: string;
   created_at: string;
   event_title?: string;
   holder_name?: string;
   ticket_type_name?: string;
+}
+
+export type GateKind = "turnstile" | "overhead" | "handheld";
+export type GateDirection = "in" | "out" | "both";
+export type GateStatus = "active" | "maintenance" | "closed";
+
+export interface Gate {
+  id: string;
+  event_id: string;
+  name: string;
+  kind: GateKind;
+  direction: GateDirection;
+  status: GateStatus;
+  open_ms: number;
+  created_at: string;
+  updated_at: string;
+  event_title?: string;
+  event_starts_at?: string;
+  device_count?: number;
+  paired_count?: number;
+  online_count?: number;
+  last_seen_at?: string | null;
 }
 
 export interface PriceRequest {
@@ -217,14 +243,25 @@ export interface Device {
   id: string;
   name: string;
   serial: string;
-  type: "scanner" | "printer" | "encoder";
+  type: "scanner" | "printer" | "encoder" | "gate_controller" | "bridge";
   status: "active" | "maintenance" | "retired";
   assigned_event_id: string | null;
   assigned_staff_id: string | null;
+  gate_id: string | null;
+  api_key_hash: string | null;
+  api_key_prefix: string | null;
+  paired_at: string | null;
+  last_seen_at: string | null;
+  last_seen_ip: string | null;
+  firmware: string | null;
+  mode: string;
   assigned_at: string | null;
   updated_at: string;
   assigned_event_title?: string | null;
   assigned_staff_name?: string | null;
+  gate_name?: string | null;
+  gate_status?: string | null;
+  gate_kind?: string | null;
 }
 
 export interface AuditLog {

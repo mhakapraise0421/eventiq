@@ -118,6 +118,19 @@ CREATE TABLE IF NOT EXISTS tickets (
   used_by TEXT
 );
 
+CREATE TABLE IF NOT EXISTS gates (
+  id TEXT PRIMARY KEY,
+  event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'turnstile',
+  direction TEXT NOT NULL DEFAULT 'in',
+  status TEXT NOT NULL DEFAULT 'active',
+  open_ms INTEGER NOT NULL DEFAULT 600,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(event_id, name)
+);
+
 CREATE TABLE IF NOT EXISTS scan_events (
   id TEXT PRIMARY KEY,
   ticket_id TEXT,
@@ -129,6 +142,10 @@ CREATE TABLE IF NOT EXISTS scan_events (
   scanned_by TEXT,
   scanner_name TEXT,
   device_id TEXT,
+  client_scan_id TEXT,
+  source TEXT NOT NULL DEFAULT 'browser',
+  gate_id TEXT REFERENCES gates(id),
+  mode TEXT NOT NULL DEFAULT 'online',
   created_at TEXT NOT NULL
 );
 
@@ -163,8 +180,26 @@ CREATE TABLE IF NOT EXISTS devices (
   status TEXT NOT NULL DEFAULT 'active',
   assigned_event_id TEXT REFERENCES events(id),
   assigned_staff_id TEXT REFERENCES users(id),
+  gate_id TEXT REFERENCES gates(id),
+  api_key_hash TEXT,
+  api_key_prefix TEXT,
+  paired_at TEXT,
+  last_seen_at TEXT,
+  last_seen_ip TEXT,
+  firmware TEXT,
+  mode TEXT NOT NULL DEFAULT 'online',
   assigned_at TEXT,
   updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS device_pairings (
+  id TEXT PRIMARY KEY,
+  device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+  code_hash TEXT NOT NULL UNIQUE,
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  created_by TEXT REFERENCES users(id),
+  created_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS audit_logs (
@@ -210,6 +245,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_event ON orders(event_id);
 CREATE INDEX IF NOT EXISTS idx_tickets_order ON tickets(order_id);
 CREATE INDEX IF NOT EXISTS idx_tickets_event ON tickets(event_id);
+CREATE INDEX IF NOT EXISTS idx_gates_event ON gates(event_id, status);
 CREATE INDEX IF NOT EXISTS idx_scan_events_event ON scan_events(event_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorite_events(user_id, created_at);

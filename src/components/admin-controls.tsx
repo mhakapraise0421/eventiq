@@ -363,19 +363,19 @@ export function UserAdminControls({
 
 export function DeviceAssignForm({
   deviceId,
-  eventId,
+  gateId,
   staffId,
-  events,
+  gates,
   staff,
 }: {
   deviceId: string;
-  eventId: string | null;
+  gateId: string | null;
   staffId: string | null;
-  events: Array<{ id: string; title: string }>;
+  gates: Array<{ id: string; name: string; event_title?: string }>;
   staff: Array<{ id: string; name: string }>;
 }) {
   const router = useRouter();
-  const [event, setEvent] = useState(eventId || "");
+  const [gate, setGate] = useState(gateId || "");
   const [member, setMember] = useState(staffId || "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -388,7 +388,7 @@ export function DeviceAssignForm({
     const result = await postJson("/api/admin/operations", {
       action: "assign-device",
       deviceId,
-      eventId: event || null,
+      gateId: gate || null,
       staffId: member || null,
     });
     if (!result.ok) {
@@ -404,14 +404,14 @@ export function DeviceAssignForm({
     <div className="space-y-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <select
-          className="input w-auto max-w-[180px] px-2 py-1.5 text-[11px]"
-          value={event}
-          onChange={(e) => setEvent(e.target.value)}
+          className="input w-auto max-w-[210px] px-2 py-1.5 text-[11px]"
+          value={gate}
+          onChange={(e) => setGate(e.target.value)}
         >
-          <option value="">Unassigned event</option>
-          {events.map((item) => (
+          <option value="">Unassigned gate</option>
+          {gates.map((item) => (
             <option key={item.id} value={item.id}>
-              {item.title}
+              {item.event_title ? `${item.event_title} · ${item.name}` : item.name}
             </option>
           ))}
         </select>

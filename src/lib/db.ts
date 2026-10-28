@@ -10,6 +10,18 @@ export type SQLValue = null | number | bigint | string | Uint8Array;
 type GlobalDb = typeof globalThis & { __eventiqDb?: DatabaseSync };
 const globalDb = globalThis as GlobalDb;
 
+function ensureColumn(
+  database: DatabaseSync,
+  table: string,
+  column: string,
+  definition: string,
+) {
+  const columns = database.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  if (!columns.some((entry) => entry.name === column)) {
+    database.exec(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
+  }
+}
+
 function createDatabase() {
   const dbPath =
     process.env.DATABASE_PATH ||
@@ -33,6 +45,37 @@ function createDatabase() {
   if (!names.has("notify_whatsapp")) {
     database.exec("ALTER TABLE users ADD COLUMN notify_whatsapp INTEGER NOT NULL DEFAULT 0");
   }
+
+  const deviceColumns: Array<[string, string]> = [
+    ["gate_id", "gate_id TEXT REFERENCES gates(id)"],
+    ["api_key_hash", "api_key_hash TEXT"],
+    ["api_key_prefix", "api_key_prefix TEXT"],
+    ["paired_at", "paired_at TEXT"],
+    ["last_seen_at", "last_seen_at TEXT"],
+    ["last_seen_ip", "last_seen_ip TEXT"],
+    ["firmware", "firmware TEXT"],
+    ["mode", "mode TEXT NOT NULL DEFAULT 'online'"],
+  ];
+  for (const [column, definition] of deviceColumns) {
+    ensureColumn(database, "devices", column, definition);
+  }
+
+  const scanColumns: Array<[string, string]> = [
+    ["client_scan_id", "client_scan_id TEXT"],
+    ["source", "source TEXT NOT NULL DEFAULT 'browser'"],
+    ["gate_id", "gate_id TEXT REFERENCES gates(id)"],
+    ["mode", "mode TEXT NOT NULL DEFAULT 'online'"],
+  ];
+  for (const [column, definition] of scanColumns) {
+    ensureColumn(database, "scan_events", column, definition);
+  }
+
+  database.exec(
+    "CREATE INDEX IF NOT EXISTS idx_devices_gate ON devices(gate_id);" +
+      "CREATE INDEX IF NOT EXISTS idx_scan_events_gate ON scan_events(gate_id, created_at);" +
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_scan_events_device_client ON scan_events(device_id, client_scan_id) WHERE client_scan_id IS NOT NULL;" +
+      "CREATE INDEX IF NOT EXISTS idx_device_pairings_device ON device_pairings(device_id, expires_at);",
+  );
 
   const row = database
     .prepare("SELECT COUNT(*) AS count FROM users")

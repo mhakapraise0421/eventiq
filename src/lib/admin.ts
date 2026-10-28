@@ -57,10 +57,12 @@ export function listUsers(): User[] {
 
 export function listDevices(): Device[] {
   return all<Device>(
-    `SELECT d.*, e.title AS assigned_event_title, u.name AS assigned_staff_name
+    `SELECT d.*, e.title AS assigned_event_title, u.name AS assigned_staff_name,
+            g.name AS gate_name, g.status AS gate_status, g.kind AS gate_kind
      FROM devices d
      LEFT JOIN events e ON e.id = d.assigned_event_id
      LEFT JOIN users u ON u.id = d.assigned_staff_id
+     LEFT JOIN gates g ON g.id = d.gate_id
      ORDER BY d.updated_at DESC`,
   );
 }
@@ -240,40 +242,6 @@ export function setUserStatus(
     entityId: userId,
     before: { status: before.status },
     after: { status, name: before.name },
-    ip,
-  });
-  return { ok: true as const };
-}
-
-export function assignDevice(
-  deviceId: string,
-  eventId: string | null,
-  staffId: string | null,
-  actor: User,
-  ip?: string | null,
-) {
-  const before = get<{ assigned_event_id: string | null }>(
-    "SELECT assigned_event_id FROM devices WHERE id = ?",
-    deviceId,
-  );
-  if (!before) return { ok: false as const, error: "Device not found." };
-  run(
-    "UPDATE devices SET assigned_event_id = ?, assigned_staff_id = ?, assigned_at = ?, updated_at = ? WHERE id = ?",
-    eventId,
-    staffId,
-    eventId ? new Date().toISOString() : null,
-    new Date().toISOString(),
-    deviceId,
-  );
-  writeAudit({
-    actorId: actor.id,
-    actorName: actor.name,
-    actorRole: actor.role,
-    action: "device.assigned",
-    entityType: "device",
-    entityId: deviceId,
-    before: { assigned_event_id: before.assigned_event_id },
-    after: { assigned_event_id: eventId, assigned_staff_id: staffId },
     ip,
   });
   return { ok: true as const };

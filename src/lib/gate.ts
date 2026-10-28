@@ -48,10 +48,14 @@ function logScan(opts: {
   message: string;
   gate: string;
   actor: ScanActor;
+  gateId?: string | null;
+  clientScanId?: string | null;
+  source?: string;
+  mode?: string;
 }) {
   run(
-    `INSERT INTO scan_events (id, ticket_id, ticket_code, event_id, result, message, gate, scanned_by, scanner_name, device_id, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO scan_events (id, ticket_id, ticket_code, event_id, result, message, gate, scanned_by, scanner_name, device_id, client_scan_id, source, gate_id, mode, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     randomId("scan_"),
     opts.ticketId,
     opts.ticketCode,
@@ -62,7 +66,51 @@ function logScan(opts: {
     opts.actor.id,
     opts.actor.name,
     opts.actor.deviceId || null,
+    opts.clientScanId || null,
+    opts.source || "browser",
+    opts.gateId || null,
+    opts.mode || "online",
     new Date().toISOString(),
+  );
+}
+
+export function recordInvalidDeviceScan(opts: {
+  raw: string;
+  eventId: string;
+  gate: string;
+  gateId: string;
+  actor: ScanActor;
+  clientScanId: string;
+  mode?: string;
+}) {
+  logScan({
+    ticketId: null,
+    ticketCode: opts.raw.slice(0, 120),
+    eventId: opts.eventId,
+    result: "invalid",
+    message: "Unrecognised ticket format. Do not admit.",
+    gate: opts.gate,
+    actor: opts.actor,
+    gateId: opts.gateId,
+    clientScanId: opts.clientScanId,
+    source: "device",
+    mode: opts.mode,
+  });
+}
+
+export function getScanByClientId(deviceId: string, clientScanId: string) {
+  return get<{
+    id: string;
+    result: ScanResult;
+    message: string | null;
+    ticket_code: string;
+    gate: string | null;
+    created_at: string;
+  }>(
+    `SELECT id, result, message, ticket_code, gate, created_at
+     FROM scan_events WHERE device_id = ? AND client_scan_id = ? LIMIT 1`,
+    deviceId,
+    clientScanId,
   );
 }
 
@@ -71,6 +119,10 @@ export function validateScan(opts: {
   eventId: string;
   actor: ScanActor;
   bypassAssignment?: boolean;
+  gateId?: string | null;
+  clientScanId?: string | null;
+  source?: string;
+  mode?: string;
 }): ScanOutcome {
   const { code, eventId, actor, bypassAssignment } = opts;
   const scannedAt = new Date().toISOString();
@@ -89,6 +141,10 @@ export function validateScan(opts: {
       message: outcome.message,
       gate: actor.gate,
       actor,
+      gateId: opts.gateId,
+      clientScanId: opts.clientScanId,
+      source: opts.source,
+      mode: opts.mode,
     });
     return outcome;
   }
@@ -111,83 +167,90 @@ export function validateScan(opts: {
         })
       | undefined;
 
+    type TicketSummary = NonNullable<ScanOutcome["ticket"]>;
+    let outcome: {
+      result: ScanResult;
+      message: string;
+      ticketId: string | null;
+      ticket?: TicketSummary;
+    };
+
     if (!ticket) {
-      return {
-        result: "invalid" as ScanResult,
+      outcome = {
+        result: "invalid",
         message: "Ticket not found. Do not admit.",
         ticketId: null,
       };
-    }
-
-    const base = {
-      code: ticket.code,
-      holderName: ticket.holder_name,
-      ticketType: ticket.ticket_type_name,
-      eventTitle: ticket.event_title,
-    };
-
-    if (ticket.event_id !== eventId) {
-      return {
-        result: "wrong_event" as ScanResult,
-        message: `Ticket is for "${ticket.event_title}", not this event.`,
-        ticketId: ticket.id,
-        ticket: base,
+    } else {
+      const base = {
+        code: ticket.code,
+        holderName: ticket.holder_name,
+        ticketType: ticket.ticket_type_name,
+        eventTitle: ticket.event_title,
       };
+
+      if (ticket.event_id !== eventId) {
+        outcome = {
+          result: "wrong_event",
+          message: `Ticket is for "${ticket.event_title}", not this event.`,
+          ticketId: ticket.id,
+          ticket: base,
+        };
+      } else if (ticket.order_status !== "paid" && ticket.order_status !== "partially_refunded") {
+        outcome = {
+          result: "not_paid",
+          message: "This ticket's payment is not confirmed.",
+          ticketId: ticket.id,
+          ticket: base,
+        };
+      } else if (ticket.status === "used") {
+        outcome = {
+          result: "duplicate",
+          message: `Already scanned at ${ticket.used_at}${ticket.used_gate ? ` (${ticket.used_gate})` : ""}.`,
+          ticketId: ticket.id,
+          ticket: base,
+        };
+      } else if (ticket.status === "void") {
+        outcome = {
+          result: "void",
+          message: "This ticket has been voided or refunded.",
+          ticketId: ticket.id,
+          ticket: base,
+        };
+      } else {
+        db.prepare(
+          "UPDATE tickets SET status = 'used', used_at = ?, used_gate = ?, used_by = ? WHERE id = ? AND status = 'valid'",
+        ).run(scannedAt, actor.gate, actor.id, ticket.id);
+        outcome = {
+          result: "accepted",
+          message: "Valid ticket — admit.",
+          ticketId: ticket.id,
+          ticket: base,
+        };
+      }
     }
 
-    if (ticket.order_status !== "paid" && ticket.order_status !== "partially_refunded") {
-      return {
-        result: "not_paid" as ScanResult,
-        message: "This ticket's payment is not confirmed.",
-        ticketId: ticket.id,
-        ticket: base,
-      };
-    }
+    logScan({
+      ticketId: outcome.ticketId,
+      ticketCode: code,
+      eventId,
+      result: outcome.result,
+      message: outcome.message,
+      gate: actor.gate,
+      actor,
+      gateId: opts.gateId,
+      clientScanId: opts.clientScanId,
+      source: opts.source,
+      mode: opts.mode,
+    });
 
-    if (ticket.status === "used") {
-      return {
-        result: "duplicate" as ScanResult,
-        message: `Already scanned at ${ticket.used_at}${ticket.used_gate ? ` (${ticket.used_gate})` : ""}.`,
-        ticketId: ticket.id,
-        ticket: base,
-      };
-    }
-
-    if (ticket.status === "void") {
-      return {
-        result: "void" as ScanResult,
-        message: "This ticket has been voided or refunded.",
-        ticketId: ticket.id,
-        ticket: base,
-      };
-    }
-
-    db.prepare(
-      "UPDATE tickets SET status = 'used', used_at = ?, used_gate = ?, used_by = ? WHERE id = ? AND status = 'valid'",
-    ).run(scannedAt, actor.gate, actor.id, ticket.id);
-
-    return {
-      result: "accepted" as ScanResult,
-      message: "Valid ticket — admit.",
-      ticketId: ticket.id,
-      ticket: base,
-    };
-  });
-
-  logScan({
-    ticketId: result.ticketId,
-    ticketCode: code,
-    eventId,
-    result: result.result,
-    message: result.message,
-    gate: actor.gate,
-    actor,
+    return outcome;
   });
 
   return {
     result: result.result,
     message: result.message,
-    ticket: "ticket" in result ? result.ticket : undefined,
+    ticket: result.ticket,
     scannedAt,
   };
 }
