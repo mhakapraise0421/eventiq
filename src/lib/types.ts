@@ -422,3 +422,149 @@ export interface ArtistAvailability {
   note: string | null;
   created_at: string;
 }
+
+export type AgreementStatus =
+  | "draft"
+  | "sent"
+  | "accepted"
+  | "changes_requested"
+  | "void";
+
+export type AgreementVersionStatus =
+  | "draft"
+  | "sent"
+  | "accepted"
+  | "changes_requested"
+  | "superseded";
+
+export type PaymentStatus = "recorded" | "received" | "failed";
+
+export type PaymentMethod = "bank_transfer" | "mobile_money" | "cash" | "card" | "other";
+
+export type InvoiceStatus = "issued" | "void";
+
+export interface ArtistAgreement {
+  id: string;
+  booking_id: string;
+  artist_id: string;
+  organizer_id: string;
+  status: AgreementStatus;
+  current_version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ArtistAgreementVersion {
+  id: string;
+  agreement_id: string;
+  version: number;
+  status: AgreementVersionStatus;
+  fee_cents: number;
+  currency: string;
+  deposit_cents: number;
+  deposit_due_on: string | null;
+  balance_due_on: string | null;
+  cancellation_terms: string | null;
+  transport_arrangements: string | null;
+  accommodation_arrangements: string | null;
+  technical_requirements: string | null;
+  responsibilities: string | null;
+  additional_conditions: string | null;
+  change_summary: string | null;
+  response_note: string | null;
+  created_by: string;
+  created_at: string;
+  sent_at: string | null;
+  responded_at: string | null;
+}
+
+export interface ArtistAgreementWithContext extends ArtistAgreement {
+  event_id: string;
+  event_title: string;
+  event_slug: string;
+  event_starts_at: string;
+  event_ends_at: string | null;
+  event_venue: string;
+  event_city: string;
+  event_status: string;
+  booking_status: BookingStatus;
+  artist_stage_name: string;
+  artist_slug: string;
+  organizer_name: string;
+  organizer_business: string | null;
+  organizer_email: string;
+  organizer_phone: string | null;
+  current_status: AgreementVersionStatus;
+  current_fee_cents: number;
+  current_currency: string;
+  current_deposit_cents: number;
+  current_deposit_due_on: string | null;
+  current_balance_due_on: string | null;
+  current_change_summary: string | null;
+  current_response_note: string | null;
+  current_sent_at: string | null;
+  current_accepted_at: string | null;
+  accepted_version: number | null;
+  accepted_fee_cents: number | null;
+  payments_received_cents: number;
+  payments_recorded_cents: number;
+  invoice_count: number;
+}
+
+export interface ArtistPayment {
+  id: string;
+  agreement_id: string;
+  invoice_id: string | null;
+  artist_id: string;
+  organizer_id: string;
+  amount_cents: number;
+  currency: string;
+  status: PaymentStatus;
+  method: PaymentMethod;
+  reference: string | null;
+  note: string | null;
+  paid_on: string;
+  recorded_by: string;
+  recorded_at: string;
+  confirmed_by: string | null;
+  confirmed_at: string | null;
+  created_at: string;
+  invoice_number?: string | null;
+  recorder_name?: string;
+  event_title?: string;
+}
+
+export interface ArtistInvoice {
+  id: string;
+  agreement_id: string;
+  artist_id: string;
+  organizer_id: string;
+  number: string;
+  description: string;
+  amount_cents: number;
+  currency: string;
+  status: InvoiceStatus;
+  issued_on: string;
+  due_on: string;
+  created_by: string;
+  created_at: string;
+  received_cents: number;
+  recorded_cents: number;
+  event_title?: string;
+  organizer_name?: string;
+  organizer_business?: string | null;
+}
+
+export interface AgreementTermsInput {
+  fee?: unknown;
+  deposit?: unknown;
+  depositDueOn?: string;
+  balanceDueOn?: string;
+  cancellationTerms?: string;
+  transportArrangements?: string;
+  accommodationArrangements?: string;
+  technicalRequirements?: string;
+  responsibilities?: string;
+  additionalConditions?: string;
+  changeSummary?: string;
+}

@@ -219,6 +219,57 @@ export const BOOKING_STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
+export const AGREEMENT_STATUS_LABEL: Record<string, string> = {
+  draft: "Draft",
+  sent: "Awaiting acceptance",
+  accepted: "Accepted",
+  changes_requested: "Changes requested",
+  void: "Void",
+};
+
+export const AGREEMENT_VERSION_STATUS_LABEL: Record<string, string> = {
+  draft: "Draft",
+  sent: "Sent to artist",
+  accepted: "Accepted",
+  changes_requested: "Changes requested",
+  superseded: "Superseded",
+};
+
+export const PAYMENT_STATUS_LABEL: Record<string, string> = {
+  recorded: "Recorded, awaiting confirmation",
+  received: "Confirmed received",
+  failed: "Failed",
+};
+
+export const PAYMENT_METHOD_LABEL: Record<string, string> = {
+  bank_transfer: "Bank transfer",
+  mobile_money: "Mobile money",
+  cash: "Cash",
+  card: "Card",
+  other: "Other",
+};
+
+export const INVOICE_PAYMENT_LABEL: Record<string, string> = {
+  unpaid: "Unpaid",
+  partial: "Partially paid",
+  paid: "Paid",
+  overdue: "Overdue",
+  void: "Void",
+};
+
+const civilDateFmt = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "Africa/Harare",
+});
+
+/** Formats a `YYYY-MM-DD` civil date without shifting it across time zones. */
+export function formatCivilDate(value: string | null | undefined) {
+  if (!value) return "—";
+  return civilDateFmt.format(new Date(`${value}T12:00:00+02:00`));
+}
+
 export const ARTIST_VERIFICATION_LABEL: Record<string, string> = {
   not_submitted: "Not submitted",
   pending: "Pending review",
@@ -234,12 +285,16 @@ export function statusTone(status: string) {
     case "active":
     case "accepted":
     case "verified":
+    case "received":
       return "bg-emerald-50 text-emerald-700 border border-emerald-200";
     case "pending":
     case "requested":
     case "duplicate":
     case "requires_modification":
     case "requires_info":
+    case "sent":
+    case "changes_requested":
+    case "recorded":
       return "bg-amber-50 text-amber-700 border border-amber-200";
     case "rejected":
     case "declined":
@@ -248,9 +303,12 @@ export function statusTone(status: string) {
     case "not_paid":
     case "suspended":
     case "cancelled":
+    case "failed":
+    case "overdue":
       return "bg-rose-50 text-rose-700 border border-rose-200";
     case "refunded":
     case "partially_refunded":
+    case "partial":
       return "bg-violet-50 text-violet-700 border border-violet-200";
     case "draft":
     case "expired":
@@ -258,10 +316,14 @@ export function statusTone(status: string) {
     case "retired":
     case "withdrawn":
     case "not_submitted":
+    case "superseded":
       return "bg-zinc-100 text-zinc-600 border border-zinc-200";
     case "used":
     case "completed":
+    case "issued":
       return "bg-sky-50 text-sky-700 border border-sky-200";
+    case "unpaid":
+      return "bg-amber-50 text-amber-700 border border-amber-200";
     default:
       return "bg-zinc-100 text-zinc-600 border border-zinc-200";
   }

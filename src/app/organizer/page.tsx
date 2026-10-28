@@ -30,6 +30,7 @@ const tabs = [
   { href: "/organizer", label: "Overview" },
   { href: "/organizer/events", label: "Events" },
   { href: "/organizer/artists", label: "Artists" },
+  { href: "/organizer/agreements", label: "Agreements" },
   { href: "/organizer/reports", label: "Reports" },
   { href: "/organizer/apply", label: "Application" },
 ];

@@ -27,6 +27,12 @@ function addDays(base: Date, days: number, hour = 18, minute = 0) {
   return d.toISOString();
 }
 
+function dayKey(base: Date, days: number) {
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 function addNextFriday(base: Date, hour = 19, minute = 0) {
   const d = new Date(base);
   d.setDate(d.getDate() + ((5 - d.getDay()) % 7 + 7) % 7);
@@ -1577,6 +1583,138 @@ export function seedDatabase(db: DatabaseSync) {
 
     for (const block of availabilityBlocks) {
       insert(db, "artist_availability", block);
+    }
+
+    insert(db, "artist_agreements", {
+      id: "agr_zimfest_tafara",
+      booking_id: "bkg_zimfest_tafara",
+      artist_id: "usr_artist1",
+      organizer_id: "usr_org1",
+      status: "accepted",
+      current_version: 2,
+      created_at: addDays(now, -11, 12),
+      updated_at: addDays(now, -6, 15),
+    });
+
+    const agreementVersions = [
+      {
+        id: "agv_zimfest_tafara_v1",
+        agreement_id: "agr_zimfest_tafara",
+        version: 1,
+        status: "superseded",
+        fee_cents: 100000,
+        currency: "USD",
+        deposit_cents: 40000,
+        deposit_due_on: dayKey(now, -9),
+        balance_due_on: dayKey(now, 20),
+        cancellation_terms:
+          "Either party may cancel with 21 days' written notice. The deposit is non-refundable after that point.",
+        transport_arrangements: "Ground transport from Harare to Bulawayo and back for the full band.",
+        accommodation_arrangements: "Two nights for six people at the festival partner hotel.",
+        technical_requirements:
+          "Full backline, 12-channel monitor mix and a 60-minute soundcheck on the day.",
+        responsibilities:
+          "Organizer provides stage, sound crew and security. Artist provides instruments and set list.",
+        additional_conditions: null,
+        change_summary: null,
+        response_note: null,
+        created_by: "usr_org1",
+        created_at: addDays(now, -11, 12),
+        sent_at: addDays(now, -11, 14),
+        responded_at: addDays(now, -10, 9),
+      },
+      {
+        id: "agv_zimfest_tafara_v2",
+        agreement_id: "agr_zimfest_tafara",
+        version: 2,
+        status: "accepted",
+        fee_cents: 120000,
+        currency: "USD",
+        deposit_cents: 40000,
+        deposit_due_on: dayKey(now, -9),
+        balance_due_on: dayKey(now, 20),
+        cancellation_terms:
+          "Either party may cancel with 21 days' written notice. The deposit is non-refundable after that point.",
+        transport_arrangements: "Ground transport from Harare to Bulawayo and back for the full band.",
+        accommodation_arrangements: "Two nights for six people at the festival partner hotel.",
+        technical_requirements:
+          "Full backline, 12-channel monitor mix and a 60-minute soundcheck on the day.",
+        responsibilities:
+          "Organizer provides stage, sound crew and security. Artist provides instruments and set list.",
+        additional_conditions: "Artist closes day two with a 60-minute headline set.",
+        change_summary:
+          "Extended the set to 60 minutes as the day-two headline and increased the fee from $1,000 to $1,200.",
+        response_note: null,
+        created_by: "usr_org1",
+        created_at: addDays(now, -7, 10),
+        sent_at: addDays(now, -7, 11),
+        responded_at: addDays(now, -6, 15),
+      },
+    ];
+
+    for (const version of agreementVersions) {
+      insert(db, "artist_agreement_versions", version);
+    }
+
+    insert(db, "artist_invoices", {
+      id: "inv_zimfest_tafara_balance",
+      agreement_id: "agr_zimfest_tafara",
+      artist_id: "usr_artist1",
+      organizer_id: "usr_org1",
+      number: "INV-2026-0001",
+      description: "Zim Fest 2026 — balance of the agreed performance fee",
+      amount_cents: 80000,
+      currency: "USD",
+      status: "issued",
+      issued_on: dayKey(now, -5),
+      due_on: dayKey(now, 20),
+      created_by: "usr_artist1",
+      created_at: addDays(now, -5, 12),
+    });
+
+    const payments = [
+      {
+        id: "pay_zimfest_tafara_deposit",
+        agreement_id: "agr_zimfest_tafara",
+        invoice_id: null,
+        artist_id: "usr_artist1",
+        organizer_id: "usr_org1",
+        amount_cents: 40000,
+        currency: "USD",
+        status: "received",
+        method: "bank_transfer",
+        reference: "ZBF-84211",
+        note: "Deposit for the Zim Fest headline set.",
+        paid_on: dayKey(now, -9),
+        recorded_by: "usr_org1",
+        recorded_at: addDays(now, -9, 10),
+        confirmed_by: "usr_artist1",
+        confirmed_at: addDays(now, -9, 11),
+        created_at: addDays(now, -9, 10),
+      },
+      {
+        id: "pay_zimfest_tafara_balance_part",
+        agreement_id: "agr_zimfest_tafara",
+        invoice_id: "inv_zimfest_tafara_balance",
+        artist_id: "usr_artist1",
+        organizer_id: "usr_org1",
+        amount_cents: 20000,
+        currency: "USD",
+        status: "recorded",
+        method: "mobile_money",
+        reference: "EC-7741",
+        note: "Part payment towards the balance.",
+        paid_on: dayKey(now, -2),
+        recorded_by: "usr_org1",
+        recorded_at: addDays(now, -2, 9),
+        confirmed_by: null,
+        confirmed_at: null,
+        created_at: addDays(now, -2, 9),
+      },
+    ];
+
+    for (const payment of payments) {
+      insert(db, "artist_payments", payment);
     }
 
     const auditLogs = [

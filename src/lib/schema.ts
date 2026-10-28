@@ -345,6 +345,93 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_artist_bookings_active
 CREATE INDEX IF NOT EXISTS idx_artist_availability_artist
   ON artist_availability(artist_id, starts_at);
 
+CREATE TABLE IF NOT EXISTS artist_agreements (
+  id TEXT PRIMARY KEY,
+  booking_id TEXT NOT NULL UNIQUE REFERENCES artist_bookings(id) ON DELETE CASCADE,
+  artist_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  organizer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'draft',
+  current_version INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS artist_agreement_versions (
+  id TEXT PRIMARY KEY,
+  agreement_id TEXT NOT NULL REFERENCES artist_agreements(id) ON DELETE CASCADE,
+  version INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'draft',
+  fee_cents INTEGER NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  deposit_cents INTEGER NOT NULL DEFAULT 0,
+  deposit_due_on TEXT,
+  balance_due_on TEXT,
+  cancellation_terms TEXT,
+  transport_arrangements TEXT,
+  accommodation_arrangements TEXT,
+  technical_requirements TEXT,
+  responsibilities TEXT,
+  additional_conditions TEXT,
+  change_summary TEXT,
+  response_note TEXT,
+  created_by TEXT NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL,
+  sent_at TEXT,
+  responded_at TEXT,
+  UNIQUE(agreement_id, version)
+);
+
+CREATE TABLE IF NOT EXISTS artist_invoices (
+  id TEXT PRIMARY KEY,
+  agreement_id TEXT NOT NULL REFERENCES artist_agreements(id) ON DELETE CASCADE,
+  artist_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  organizer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  number TEXT NOT NULL UNIQUE,
+  description TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  status TEXT NOT NULL DEFAULT 'issued',
+  issued_on TEXT NOT NULL,
+  due_on TEXT NOT NULL,
+  created_by TEXT NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS artist_payments (
+  id TEXT PRIMARY KEY,
+  agreement_id TEXT NOT NULL REFERENCES artist_agreements(id) ON DELETE CASCADE,
+  invoice_id TEXT REFERENCES artist_invoices(id) ON DELETE SET NULL,
+  artist_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  organizer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount_cents INTEGER NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  status TEXT NOT NULL DEFAULT 'recorded',
+  method TEXT NOT NULL,
+  reference TEXT,
+  note TEXT,
+  paid_on TEXT NOT NULL,
+  recorded_by TEXT NOT NULL REFERENCES users(id),
+  recorded_at TEXT NOT NULL,
+  confirmed_by TEXT REFERENCES users(id),
+  confirmed_at TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_artist_agreements_artist
+  ON artist_agreements(artist_id, updated_at);
+CREATE INDEX IF NOT EXISTS idx_artist_agreements_organizer
+  ON artist_agreements(organizer_id, updated_at);
+CREATE INDEX IF NOT EXISTS idx_artist_agreement_versions_agreement
+  ON artist_agreement_versions(agreement_id, version);
+CREATE INDEX IF NOT EXISTS idx_artist_invoices_artist
+  ON artist_invoices(artist_id, issued_on);
+CREATE INDEX IF NOT EXISTS idx_artist_invoices_agreement
+  ON artist_invoices(agreement_id);
+CREATE INDEX IF NOT EXISTS idx_artist_payments_agreement
+  ON artist_payments(agreement_id, status);
+CREATE INDEX IF NOT EXISTS idx_artist_payments_artist
+  ON artist_payments(artist_id, paid_on);
+
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
