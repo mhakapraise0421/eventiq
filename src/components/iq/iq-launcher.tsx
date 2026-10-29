@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { formatDayParts, formatMoney } from "@/lib/format";
+import { useDismissable } from "../use-dismissable";
 
 interface IqSource {
   slug: string;
@@ -132,6 +133,7 @@ export function IqLauncher({ enabled }: { enabled: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -151,14 +153,14 @@ export function IqLauncher({ enabled }: { enabled: boolean }) {
     };
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  // Clicking away or navigating closes the panel without stealing focus;
+  // Escape and the close button return focus to the launch button.
+  useDismissable({
+    open,
+    onClose: (reason) => close(reason === "escape"),
+    containerRef: panelRef,
+    triggerRef: buttonRef,
+  });
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -193,9 +195,9 @@ export function IqLauncher({ enabled }: { enabled: boolean }) {
     void restore();
   }
 
-  function close() {
+  function close(restoreFocus = true) {
     setOpen(false);
-    window.setTimeout(() => buttonRef.current?.focus(), 0);
+    if (restoreFocus) window.setTimeout(() => buttonRef.current?.focus(), 0);
   }
 
   function startNewChat() {
@@ -257,7 +259,7 @@ export function IqLauncher({ enabled }: { enabled: boolean }) {
       <button
         ref={buttonRef}
         type="button"
-        onClick={openPanel}
+        onClick={() => (open ? close() : openPanel())}
         aria-label="Ask IQ, the EventIQ event discovery assistant"
         className="fixed bottom-5 right-5 z-[60] flex items-center gap-2 rounded-full bg-[linear-gradient(120deg,#6026D9,#7C3AED_55%,#22D3EE)] px-4 py-3 font-display text-[13px] font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 motion-reduce:transition-none"
       >
@@ -267,6 +269,7 @@ export function IqLauncher({ enabled }: { enabled: boolean }) {
 
       {open ? (
         <div
+          ref={panelRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="iq-panel-title"
@@ -294,7 +297,7 @@ export function IqLauncher({ enabled }: { enabled: boolean }) {
             ) : null}
             <button
               type="button"
-              onClick={close}
+              onClick={() => close()}
               aria-label="Close IQ"
               className="rounded-lg p-2 text-white/60 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqua-400"
             >

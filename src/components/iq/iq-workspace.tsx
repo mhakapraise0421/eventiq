@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, RotateCcw, Send, ShieldCheck, Sparkles, X } from "lucide-react";
+import { useDismissable } from "../use-dismissable";
 
 type Surface = "organizer" | "artist";
 
@@ -64,6 +65,7 @@ export function IqWorkspace({
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   // History restore is async; once the user has sent or reset a chat, a late
   // restore must not overwrite the turn they just started.
   const interactedRef = useRef(false);
@@ -77,15 +79,13 @@ export function IqWorkspace({
     };
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-
+  // Clicking outside the desktop drawer, Escape or navigation closes it.
+  // Only Escape and the close button return focus to the launch button.
+  useDismissable({
+    open,
+    onClose: (reason) => close(reason === "escape"),
+    containerRef: panelRef,
+  });
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
@@ -120,9 +120,9 @@ export function IqWorkspace({
     void restore();
   }
 
-  function close() {
+  function close(restoreFocus = true) {
     setOpen(false);
-    window.setTimeout(() => buttonRef.current?.focus(), 0);
+    if (restoreFocus) window.setTimeout(() => buttonRef.current?.focus(), 0);
   }
 
   function startNewChat() {
@@ -195,6 +195,7 @@ export function IqWorkspace({
 
       {open ? (
         <div
+          ref={panelRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="iq-workspace-title"
@@ -224,7 +225,7 @@ export function IqWorkspace({
             ) : null}
             <button
               type="button"
-              onClick={close}
+              onClick={() => close()}
               aria-label="Close IQ workspace"
               className="rounded-lg p-2 text-white/60 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqua-400"
             >
