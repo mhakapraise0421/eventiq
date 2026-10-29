@@ -487,4 +487,32 @@ CREATE TABLE IF NOT EXISTS user_recovery_codes (
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id, expires_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);
 CREATE INDEX IF NOT EXISTS idx_recovery_codes_user ON user_recovery_codes(user_id, used_at);
+
+CREATE TABLE IF NOT EXISTS iq_conversations (
+  id TEXT PRIMARY KEY,
+  user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+  visitor_token_hash TEXT,
+  surface TEXT NOT NULL DEFAULT 'public',
+  title TEXT,
+  created_at TEXT NOT NULL,
+  last_message_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS iq_messages (
+  id TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL REFERENCES iq_conversations(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  sources_json TEXT,
+  provider TEXT,
+  model TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_iq_conversations_user
+  ON iq_conversations(user_id, last_message_at DESC);
+CREATE INDEX IF NOT EXISTS idx_iq_conversations_token
+  ON iq_conversations(visitor_token_hash);
+CREATE INDEX IF NOT EXISTS idx_iq_messages_conversation
+  ON iq_messages(conversation_id, created_at);
 `;

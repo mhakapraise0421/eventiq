@@ -4,6 +4,8 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
+import { IqLauncher } from "@/components/iq/iq-launcher";
+import { iqEnabled } from "@/lib/iq/config";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -74,6 +76,7 @@ export default function RootLayout({
         <SiteHeader />
         <main className="min-h-[60vh]">{children}</main>
         <SiteFooter />
+        <IqLauncher enabled={iqEnabled()} />
       </body>
     </html>
   );
