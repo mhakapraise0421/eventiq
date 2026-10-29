@@ -8,6 +8,7 @@ import {
   disableMfa,
   hasConfirmedMfa,
   mfaSetupUrl,
+  roleRequiresMfa,
   startMfaEnrollment,
   verifyMfaCode,
 } from "@/lib/mfa";
@@ -62,6 +63,12 @@ export async function POST(request: Request) {
   }
 
   if (action === "disable") {
+    if (roleRequiresMfa(user.role)) {
+      return jsonError(
+        "Two-factor authentication is required for your account type and can't be turned off. Use a recovery code if you lose your authenticator, then contact support.",
+        403,
+      );
+    }
     if (!hasConfirmedMfa(user.id)) {
       return jsonError("Two-factor authentication is not enabled on this account.", 400);
     }

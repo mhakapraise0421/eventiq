@@ -7,12 +7,20 @@ export interface IqRuntimeConfig {
   baseUrl: string;
   apiKey: string;
   maxTokens: number;
+  dailyQuota: number;
+  anonymousIpQuota: number;
 }
 
 function envFlag(value: string | undefined, fallback: boolean) {
   const raw = (value || "").trim().toLowerCase();
   if (!raw) return fallback;
   return !(raw === "0" || raw === "false" || raw === "off" || raw === "no");
+}
+
+function envCount(value: string | undefined, fallback: number) {
+  const parsed = Number((value || "").trim());
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  return Math.min(Math.floor(parsed), 2000);
 }
 
 /**
@@ -31,6 +39,8 @@ export function iqConfig(): IqRuntimeConfig {
     baseUrl: (process.env.IQ_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, ""),
     apiKey,
     maxTokens: 600,
+    dailyQuota: envCount(process.env.IQ_DAILY_QUOTA, 40),
+    anonymousIpQuota: envCount(process.env.IQ_ANON_IP_DAILY_QUOTA, 120),
   };
 }
 

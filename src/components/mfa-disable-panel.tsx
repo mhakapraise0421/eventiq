@@ -7,9 +7,11 @@ import { AlertCircle, Check, KeyRound, Loader2, ShieldCheck, ShieldOff } from "l
 export function MfaDisablePanel({
   confirmedAt,
   recoveryCodesRemaining,
+  canDisable = true,
 }: {
   confirmedAt: string | null;
   recoveryCodesRemaining: number;
+  canDisable?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -74,13 +76,21 @@ export function MfaDisablePanel({
         </p>
       ) : null}
 
+      {!canDisable ? (
+        <p className="mt-3 rounded-lg border border-line bg-surface/60 px-3 py-2 text-[11px] leading-relaxed text-ink-500">
+          Two-factor authentication is required for your account type, so it can&apos;t be turned
+          off here. If you lose your authenticator, sign in with a recovery code, then ask support
+          to re-issue a new set.
+        </p>
+      ) : null}
+
       {done ? (
         <p className="mt-3 flex items-center gap-1.5 text-[11.5px] font-semibold text-emerald-600">
           <Check className="h-3.5 w-3.5" /> {done}
         </p>
       ) : null}
 
-      {open ? (
+      {open && canDisable ? (
         <form onSubmit={disable} className="mt-3 space-y-2 rounded-xl border border-line bg-surface/50 p-3">
           <p className="text-[11px] font-semibold text-ink-700">
             Confirm with your password and a current code (or a recovery code).
@@ -120,7 +130,7 @@ export function MfaDisablePanel({
             </button>
           </div>
         </form>
-      ) : (
+      ) : canDisable ? (
         <button
           type="button"
           className="btn btn-outline btn-sm mt-3"
@@ -131,7 +141,7 @@ export function MfaDisablePanel({
         >
           <KeyRound className="h-3.5 w-3.5" /> Change or disable two-factor
         </button>
-      )}
+      ) : null}
 
       {error ? (
         <p className="mt-2 flex items-start gap-1.5 text-[11px] text-rose-600">

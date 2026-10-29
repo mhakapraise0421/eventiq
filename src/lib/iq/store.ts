@@ -81,17 +81,23 @@ export function createConversation(input: {
   return loadConversation(id) as IqConversationRow;
 }
 
-export function latestConversation(user: User | null, tokenHash: string | null) {
+export function latestConversation(
+  user: User | null,
+  tokenHash: string | null,
+  surface = "public",
+) {
   if (user) {
     return get<IqConversationRow>(
-      "SELECT * FROM iq_conversations WHERE user_id = ? ORDER BY last_message_at DESC LIMIT 1",
+      "SELECT * FROM iq_conversations WHERE user_id = ? AND surface = ? ORDER BY last_message_at DESC LIMIT 1",
       user.id,
+      surface,
     );
   }
   if (!tokenHash) return undefined;
   return get<IqConversationRow>(
-    "SELECT * FROM iq_conversations WHERE visitor_token_hash = ? AND user_id IS NULL ORDER BY last_message_at DESC LIMIT 1",
+    "SELECT * FROM iq_conversations WHERE visitor_token_hash = ? AND user_id IS NULL AND surface = ? ORDER BY last_message_at DESC LIMIT 1",
     tokenHash,
+    surface,
   );
 }
 

@@ -6,6 +6,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { iqEnabled } from "@/lib/iq/config";
 import { searchPublicEvents, toIqSource } from "@/lib/iq/discovery";
 import { answerPublicQuestion, IqError } from "@/lib/iq/provider";
+import { consumeIqQuota, quotaMessage } from "@/lib/iq/usage";
 import {
   IQ_COOKIE,
   IQ_COOKIE_MAX_AGE,
@@ -57,9 +58,15 @@ export async function GET(request: Request) {
   const tokenHash = token ? hashVisitorToken(token) : null;
   const user = await getCurrentUser();
   const requested = new URL(request.url).searchParams.get("conversationId");
-  const conversation = requested ? loadConversation(requested) : latestConversation(user, tokenHash);
+  const conversation = requested
+    ? loadConversation(requested)
+    : latestConversation(user, tokenHash, "public");
 
-  if (!conversation || !canAccessConversation(conversation, user, tokenHash)) {
+  if (
+    !conversation ||
+    conversation.surface !== "public" ||
+    !canAccessConversation(conversation, user, tokenHash)
+  ) {
     return NextResponse.json({ conversationId: null, messages: [] });
   }
 
@@ -82,7 +89,8 @@ export async function POST(request: Request) {
     return jsonError(`Keep questions under ${MAX_MESSAGE} characters.`, 413);
   }
 
-  const limited = rateLimit(`iq:ask:${clientIp(request)}`, 30, 10 * 60_000);
+  const ip = clientIp(request);
+  const limited = rateLimit(`iq:ask:${ip}`, 30, 10 * 60_000);
   if (!limited.ok) {
     return jsonError(
       "You've asked IQ a lot in a short time. Please try again in a few minutes.",
@@ -96,7 +104,12 @@ export async function POST(request: Request) {
   const user = await getCurrentUser();
 
   let conversation = body.conversationId ? loadConversation(body.conversationId) : null;
-  if (body.conversationId && (!conversation || !canAccessConversation(conversation, user, tokenHash))) {
+  if (
+    body.conversationId &&
+    (!conversation ||
+      conversation.surface !== "public" ||
+      !canAccessConversation(conversation, user, tokenHash))
+  ) {
     return jsonError("That conversation is no longer available. Start a new chat.", 404);
   }
 
@@ -106,7 +119,11 @@ export async function POST(request: Request) {
       tokenHash = hashVisitorToken(token);
       store.set(IQ_COOKIE, token, cookieOptions());
     }
-    conversation = createConversation({ user, tokenHash: user ? null : tokenHash });
+    conversation = createConversation({
+      user,
+      tokenHash: user ? null : tokenHash,
+      surface: "public",
+    });
   }
 
   if (countUserTurns(conversation.id) >= MAX_TURNS) {
@@ -115,6 +132,15 @@ export async function POST(request: Request) {
       409,
       { code: "conversation_full" },
     );
+  }
+
+  const quota = consumeIqQuota({ userId: user?.id ?? null, visitorTokenHash: tokenHash, ip });
+  if (!quota.ok) {
+    return jsonError(quotaMessage(quota), 429, {
+      code: "quota_exceeded",
+      limit: quota.limit,
+      resetAt: quota.resetAt,
+    });
   }
 
   const history = recentMessages(conversation.id, 8).map((entry) => ({

@@ -515,4 +515,17 @@ CREATE INDEX IF NOT EXISTS idx_iq_conversations_token
   ON iq_conversations(visitor_token_hash);
 CREATE INDEX IF NOT EXISTS idx_iq_messages_conversation
   ON iq_messages(conversation_id, created_at);
+
+-- Daily IQ usage counters for cost control. The key is a user id or a hash of
+-- the anonymous visitor token, so no raw identifiers are stored. Kept separate
+-- from iq_messages because it must be counted atomically and outlive chats.
+CREATE TABLE IF NOT EXISTS iq_usage (
+  principal_key TEXT NOT NULL,
+  day TEXT NOT NULL,
+  requests INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (principal_key, day)
+);
+
+CREATE INDEX IF NOT EXISTS idx_iq_usage_day ON iq_usage(day);
 `;

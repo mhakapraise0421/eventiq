@@ -26,8 +26,8 @@ export default async function LoginSetupPage({
   return (
     <AuthShell
       eyebrow="Before you continue"
-      title="Protect the console that moves money and tickets."
-      subtitle="Your role can approve organizers, verify artists and issue refunds. That access needs a second factor."
+      title="Protect the console that holds your calendar and earnings."
+      subtitle="Artist and staff accounts need an authenticator app before using their console. Use any app that generates six-digit codes, such as Google Authenticator or Authy."
     >
       <MfaEnrollForm mode="challenge" nextPath={nextPath} />
     </AuthShell>

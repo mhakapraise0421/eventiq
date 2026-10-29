@@ -7,24 +7,63 @@ import { resolveSecret } from "./secrets";
 import { generateTotpSecret, otpauthUrl, verifyTotp } from "./totp";
 import type { Role, User } from "./types";
 
-export type MfaPolicy = "off" | "staff" | "all";
+export type MfaPolicy = "off" | "staff" | "all" | "custom";
+
+const STAFF_ROLES: Role[] = ["gate", "admin", "ceo"];
+const POLICY_TOKENS: Record<string, Role[]> = {
+  staff: STAFF_ROLES,
+  artists: ["artist"],
+  artist: ["artist"],
+  organizers: ["organizer"],
+  organizer: ["organizer"],
+  attendees: ["attendee"],
+  attendee: ["attendee"],
+};
+
+interface PolicyConfig {
+  all: boolean;
+  roles: Set<Role>;
+  label: MfaPolicy;
+  raw: string;
+}
 
 /**
- * Two-factor enforcement. Off by default in development so the seeded demo
- * accounts stay usable; staff roles are enforced in production unless the
- * deployment opts out explicitly.
+ * Two-factor enforcement. Production defaults to staff plus artists, so artist
+ * calendars, enquiries and earnings sit behind a second factor. Development
+ * stays opt-in so the seeded demo accounts can sign in without setup.
+ *
+ * MFA_ENFORCEMENT accepts "off", "all", "staff", or a comma-separated role
+ * list such as "staff,artists".
  */
-export function mfaPolicy(): MfaPolicy {
+function policyConfig(): PolicyConfig {
   const raw = (process.env.MFA_ENFORCEMENT || "").trim().toLowerCase();
-  if (raw === "off" || raw === "all" || raw === "staff") return raw;
-  return process.env.NODE_ENV === "production" ? "staff" : "off";
+  const source = raw || (process.env.NODE_ENV === "production" ? "staff,artists" : "off");
+  if (source === "off") return { all: false, roles: new Set(), label: "off", raw: source };
+  if (source === "all") return { all: true, roles: new Set(), label: "all", raw: source };
+  if (source === "staff") return { all: false, roles: new Set(STAFF_ROLES), label: "staff", raw: source };
+
+  const roles = new Set<Role>();
+  for (const token of source.split(/[,\s]+/).filter(Boolean)) {
+    for (const role of POLICY_TOKENS[token] || []) roles.add(role);
+  }
+  if (!roles.size) return { all: false, roles, label: "off", raw: source };
+  return { all: false, roles, label: "custom", raw: source };
+}
+
+/** Human-readable policy value for the security page. */
+export function mfaPolicy(): MfaPolicy {
+  return policyConfig().label;
+}
+
+/** Raw configured value, shown so operators can see what is enforced. */
+export function mfaPolicyValue() {
+  const config = policyConfig();
+  return config.label === "custom" ? config.raw : config.label;
 }
 
 export function roleRequiresMfa(role: Role) {
-  const policy = mfaPolicy();
-  if (policy === "off") return false;
-  if (policy === "all") return true;
-  return role === "gate" || role === "admin" || role === "ceo";
+  const config = policyConfig();
+  return config.all || config.roles.has(role);
 }
 
 function encryptionKey() {

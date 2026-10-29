@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CircleAlert, KeyRound, Laptop, ShieldCheck } from "lucide-react";
 import { getCurrentSessionId, getCurrentUser, listSessions } from "@/lib/auth";
-import { mfaPolicy, mfaStatus, roleRequiresMfa } from "@/lib/mfa";
+import { mfaPolicy, mfaPolicyValue, mfaStatus, roleRequiresMfa } from "@/lib/mfa";
 import { homeForRole } from "@/lib/routes";
 import { ConsoleHeader } from "@/components/console-header";
 import { MfaEnrollForm } from "@/components/mfa-enroll-form";
@@ -24,6 +24,7 @@ export default async function SecurityPage() {
   ]);
   const required = roleRequiresMfa(user.role);
   const policy = mfaPolicy();
+  const policyValue = mfaPolicyValue();
   const recoveryHint =
     status.enabled && status.recoveryCodesRemaining <= 2
       ? "You have very few recovery codes left. Ask support to re-issue a set."
@@ -51,7 +52,8 @@ export default async function SecurityPage() {
                 Two-factor authentication is required for your role
               </p>
               <p className="mt-1 text-[11.5px] leading-relaxed text-amber-800">
-                This account can reach staff consoles. Set up an authenticator below to continue.
+                Artist and staff accounts need an authenticator app before using their console.
+                Set it up below to continue.
               </p>
             </div>
           </div>
@@ -72,6 +74,7 @@ export default async function SecurityPage() {
                   <MfaDisablePanel
                     confirmedAt={status.confirmedAt}
                     recoveryCodesRemaining={status.recoveryCodesRemaining}
+                    canDisable={!required}
                   />
                 ) : (
                   <MfaEnrollForm mode="session" />
@@ -119,11 +122,17 @@ export default async function SecurityPage() {
 
             {policy === "off" ? (
               <p className="rounded-xl border border-line bg-white px-4 py-3 text-[10.5px] leading-relaxed text-ink-400">
-                This environment does not require two-factor authentication. Staff deployments can
-                enforce it with <span className="font-mono">MFA_ENFORCEMENT=staff</span> (or
-                <span className="font-mono"> all</span>).
+                This environment does not require two-factor authentication. Deployments that
+                need it can set{" "}
+                <span className="font-mono">MFA_ENFORCEMENT=staff,artists</span> (or{" "}
+                <span className="font-mono">all</span>).
               </p>
-            ) : null}
+            ) : (
+              <p className="rounded-xl border border-line bg-white px-4 py-3 text-[10.5px] leading-relaxed text-ink-400">
+                This environment enforces two-factor authentication for:{" "}
+                <span className="font-mono">{policyValue}</span>.
+              </p>
+            )}
           </div>
         </div>
       </div>

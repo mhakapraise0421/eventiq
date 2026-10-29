@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Check,
   CircleAlert,
+  KeyRound,
   Pause,
   Play,
   RotateCcw,
@@ -296,7 +297,7 @@ export function UserAdminControls({
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
 
-  async function save(patch: { role?: string; status?: string }) {
+  async function save(patch: { role?: string; status?: string; resetMfa?: boolean }) {
     setBusy(true);
     setError("");
     setDone("");
@@ -355,6 +356,24 @@ export function UserAdminControls({
             <Play className="h-3 w-3" /> Reactivate
           </button>
         )}
+        {role === "artist" ? (
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-ink-500"
+            onClick={() => {
+              if (
+                window.confirm(
+                  "Reset this artist's two-factor authentication? They will need to set it up again at their next sign-in, and their other sessions will be signed out.",
+                )
+              ) {
+                void save({ resetMfa: true });
+              }
+            }}
+            disabled={busy}
+          >
+            <KeyRound className="h-3 w-3" /> Reset 2FA
+          </button>
+        ) : null}
       </div>
       <Feedback error={error} done={done} />
     </div>
